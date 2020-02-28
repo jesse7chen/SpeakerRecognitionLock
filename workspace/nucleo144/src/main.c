@@ -27,7 +27,10 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static SPI_HandleTypeDef hspi;
+static SPI_HandleTypeDef spi_h;
+static char test_string[] = "Chris is a bitch\r\n";
+static ADC_HandleTypeDef adc_h;
+static ADC_ChannelConfTypeDef adc_chan_conf;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -72,54 +75,125 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED3);
 
+// Initialize ADC handler
+  adc_h.Instance = NUCLEO_ADCx;
+  adc_h.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2; /* We choose a synchronous clock in msp_init and we choose /2 because
+  that's the fastest we can do unless system clock is already prescaled by 2*/
+  adc_h.Init.Resolution = ADC_RESOLUTION_12B; // Highest possible resolution
+  /* The register that holds our conversion results is 16 bits wide (ADC_DR)
+   * Right justified means that MSBs are set to zero (bits 15-12)
+   * Left justified means that LSBs are set to zero (bits 0-3)
+   * Left justified could be useful if you just wanted to grab the most significant byte and din't need the extra two
+   * bytes of precision
+   * Right justified is probably better for our needs since we want all 12 bits of precision and don't want to scale,
+   * which you would have to do if you wanted the entire value from a left justified register */
+  adc_h.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  /* Seems like this enables/disables sequence scanning, which allows for automatic sequential scanning of multiple channels */
+  adc_h.Init.ScanConvMode = DISABLE;
+  /* Choose single conversion End of Conversion flag since sequencer is not enabled */
+  adc_h.Init.EOCSelection =  ADC_EOC_SINGLE_CONV;
+  /* Supposed to be used with polling systems. Basically waits to start new conversion until previous conversion has been retrieved.
+   * This will just lead to stale data if I use it though */
+  adc_h.Init.LowPowerAutoWait = DISABLE;
+  /* Automatically restart conversion after each conversion */
+  adc_h.Init.ContinuousConvMode = ENABLE;
+  /* Only converting on one channel for now */
+  adc_h.Init.NbrOfConversion = 1;
+  /* Specifies (if we have a sequence) if we want to split sequencer conversion into multiple successive parts */
+  adc_h.Init.DiscontinuousConvMode = DISABLE;
+  /* Not even using this parameter, but it's the number of discontinuous conversions that the sequencer will be subdivided into */
+  adc_h.Init.NbrOfDiscConversion = 1;
+  /* We want FW to trigger conversion start */
+  adc_h.Init.ExternalTrigConv =  ADC_SOFTWARE_START;
+  /* We have a software trigger so the trigger edge doesn't matter */
+  adc_h.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  /* Select whether DMA requests are done in a single shot or if the DMA transfer is unlimited (DMA must be in circular mode) */
+  adc_h.Init.DMAContinuousRequests = ENABLE;
+  /* Data should be overwritten with last conversion result in case of overrun since we don't want stale data
+   * We do always want the latest data, though ideally there shouldn't be any overrun.
+   * Since we are in DMA mode, an error is reported for whatever overrun setting since DMA is expected to process all data from register */
+  adc_h.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  /* Oversampler can do data pre-processing to offload CPU, such as averaging, SNR improvement, and filtering. Won't use it for now, but
+   * might want to enable it in the future. Can't see any reason to want to do this though */
+  adc_h.Init.OversamplingMode = DISABLE;
+  /* adc_h.Init.Oversampling = insert structure here if you wanted to actually do oversampling */
+
 // Initialize SPI handler
-  hspi.Instance = SPI1;
+  spi_h.Instance = SPI1;
   // Specify if board is master or slave
-  hspi.Init.Mode = SPI_MODE_MASTER;
+  spi_h.Init.Mode = SPI_MODE_MASTER;
   // Selecting full-duplex communication
-  hspi.Init.Direction = SPI_DIRECTION_2LINES;
+  spi_h.Init.Direction = SPI_DIRECTION_2LINES;
   // Select dataframe size to be 8 bits
-  hspi.Init.DataSize = SPI_DATASIZE_8BIT;
+  spi_h.Init.DataSize = SPI_DATASIZE_8BIT;
   // CLK polarity determines IDLE state of SCLK when no data is being transferred
-  hspi.Init.CLKPolarity = SPI_POLARITY_LOW;
+  spi_h.Init.CLKPolarity = SPI_POLARITY_LOW;
   // Capture data on first edge (default config) of SCLK instead of second edge
-  hspi.Init.CLKPhase = SPI_PHASE_1EDGE;
+  spi_h.Init.CLKPhase = SPI_PHASE_1EDGE;
   /* Choose slave select pin to be driven by software, specifically by SSI bit value in SPIx_CR1 - leaves external pin free for other uses?
    * Can also do hardware configurations to have it output enable (master only) or output disable (which allows multi-master capabilities) */
-  hspi.Init.NSS = SPI_NSS_SOFT;
+  spi_h.Init.NSS = SPI_NSS_SOFT;
   /* For writing to BLE chip, SCLK should be less than 4MHz. System CLK is configured to 120 MHz, and both APB prescalers are 1, so SPI fpclk should also be 120 MHz.
    * Set prescaler to 32 for 3.75 MHz SCLK  */
-  hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  spi_h.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   // Write MSB first, as BLE chip requires that
-  hspi.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  spi_h.Init.FirstBit = SPI_FIRSTBIT_MSB;
   /* Setting this forces the config settings to conform to the Texas Instruments protocol requirements.
    * I guess by default we are in Motorola SPI communication mode, though not necessarily, as these two modes just refer to different clock polarity/phase settings */
-  hspi.Init.TIMode = SPI_TIMODE_DISABLE;
+  spi_h.Init.TIMode = SPI_TIMODE_DISABLE;
   // Don't think we need CRC calculations?
-  hspi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  spi_h.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
   // CRC Polynomial value is what is used to calculate the CRC
-  hspi.Init.CRCPolynomial = 7;
+  spi_h.Init.CRCPolynomial = 7;
   // Setting CRC length, not that it matters
-  hspi.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  spi_h.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
   /* NSS (slave select) Pulse mode - designed for applications with a single master-slave pair. Allows slave to latch data by generating an NSS pulse
   * between two consecutive data frames. Doesn't matter as we have software NSS */
-  hspi.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  spi_h.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
 
-  if(HAL_SPI_Init(&hspi) != HAL_OK)
+  if(HAL_ADC_Init(&adc_h) != HAL_OK){
+	  /* Initialization error */
+	  Error_Handler();
+  }
+
+  /* Calibrate ADC */
+  if (HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED) != HAL_OK){
+	  Error_Handler();
+  }
+
+  /* Configure ADC channels */
+  adc_chan_conf.Channel = NUCLEO_ADCx_CHANNEL;
+  adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
+  /* Sample every 2.5 ADC clock cycles - this is the fastest possible time */
+  adc_chan_conf.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  /* Channel is single ended */
+  adc_chan_conf.SingleDiff = ADC_SINGLE_ENDED;
+  /* We don't want a channel offset, the microphone bias should fit within the ~3.6V range of the ADC */
+  adc_chan_conf.OffsetNumber = ADC_OFFSET_NONE;
+  adc_chan_conf.Offset = 0;
+
+  if (HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf) != HAL_OK){
+	  Error_Handler();
+  }
+
+  if(HAL_SPI_Init(&spi_h) != HAL_OK)
   {
     /* Initialization Error */
-    // For some reason this still initializes correctly if hspi.Instance is not defined...
+    // For some reason this still initializes correctly if spi_h.Instance is not defined...
     Error_Handler();
   }
 
-  bleInit(&hspi);
+  bleInit(&spi_h);
+
+
+  /* */
 
   /* Infinite loop */
   while (1)
   {
 	  // Blink LED1
 	  BSP_LED_On(LED1);
-	  bleWriteUART("Tests\r\n", 7);
+	  bleWriteUART(test_string, sizeof(test_string));
 	  HAL_Delay(500);
 	  BSP_LED_Off(LED1);
 	  HAL_Delay(500);
