@@ -25,12 +25,18 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define AUDIO_DATA_BUFFER_SIZE ((uint32_t)  32)   /* Size of array aADCxConvertedData[] */
+#define VREF ((double)3.2) /* Empirically tested with a voltage supply - probably should compare to internal vref */
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static SPI_HandleTypeDef spi_h;
-static char test_string[] = "Chris is a bitch\r\n";
-static ADC_HandleTypeDef adc_h;
-static ADC_ChannelConfTypeDef adc_chan_conf;
+static char test_string[] = "Test string\r\n";
+ADC_HandleTypeDef adc_h;
+ADC_ChannelConfTypeDef adc_chan_conf;
+
+/* Contains ADC data from microphone */
+static uint16_t   audio_data[AUDIO_DATA_BUFFER_SIZE];
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -77,6 +83,13 @@ int main(void)
 
 // Initialize ADC handler
   adc_h.Instance = NUCLEO_ADCx;
+
+  if (HAL_ADC_DeInit(&adc_h) != HAL_OK)
+  {
+    /* ADC de-initialization Error */
+    Error_Handler();
+  }
+
   adc_h.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2; /* We choose a synchronous clock in msp_init and we choose /2 because
   that's the fastest we can do unless system clock is already prescaled by 2*/
   adc_h.Init.Resolution = ADC_RESOLUTION_12B; // Highest possible resolution
@@ -165,7 +178,7 @@ int main(void)
   adc_chan_conf.Channel = NUCLEO_ADCx_CHANNEL;
   adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
   /* Sample every 2.5 ADC clock cycles - this is the fastest possible time */
-  adc_chan_conf.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
+  adc_chan_conf.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
   /* Channel is single ended */
   adc_chan_conf.SingleDiff = ADC_SINGLE_ENDED;
   /* We don't want a channel offset, the microphone bias should fit within the ~3.6V range of the ADC */
@@ -187,17 +200,26 @@ int main(void)
 
 
   /* */
+  /* Start ADC reads */
+	if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
+		Error_Handler();
+	}
 
   /* Infinite loop */
   while (1)
   {
-	  // Blink LED1
-	  BSP_LED_On(LED1);
-	  bleWriteUART(test_string, sizeof(test_string));
-	  HAL_Delay(500);
-	  BSP_LED_Off(LED1);
-	  HAL_Delay(500);
 
+	// Blink LED1
+	BSP_LED_On(LED1);
+	bleWriteUART(test_string, sizeof(test_string));
+	HAL_Delay(500);
+
+//	if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
+//	  Error_Handler();
+//	}
+
+	BSP_LED_Off(LED1);
+	HAL_Delay(500);
   }
 }
 /* End of main function */

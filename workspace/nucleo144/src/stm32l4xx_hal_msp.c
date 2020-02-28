@@ -50,7 +50,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define ADC_DMA 1
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +63,10 @@
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
 	GPIO_InitTypeDef gpio_init;
-	DMA_HandleTypeDef adc_dma;
+	/* 2/27
+	 * Forgot to make this static and spent a solid 2 hours trying to debug why the ADC wasn't working
+	 * In the future, I should probably check if any handler goes out of scope */
+	static DMA_HandleTypeDef adc_dma;
 
 // Enable GPIO clock
 	NUCLEO_ADCx_GPIO_CLK_ENABLE();
@@ -79,6 +82,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
 
 // Initialize GPIO
 	gpio_init.Pin = NUCLEO_ADCx_GPIO_PIN;
+	// Not the same as GPIO_MODE_ANALOG
 	gpio_init.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
 	gpio_init.Pull = GPIO_NOPULL;
 	// Speed shouldn't matter since it's not output, just set to 0
@@ -88,7 +92,6 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
 	HAL_GPIO_Init(NUCLEO_ADCx_GPIO_PORT, &gpio_init);
 
 // Configure DMA
-#ifdef ADC_DMA
 	adc_dma.Instance = DMA1_Channel1;
 	// Map the request to ADC1
 	adc_dma.Init.Request = DMA_REQUEST_ADC1;
@@ -102,10 +105,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
 	adc_dma.Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
 	// Circular mode is available to handle circular buffers and continuous data flows (such as ADC scan mode)
 	adc_dma.Init.Mode = DMA_CIRCULAR;
-	adc_dma.Init.Priority = DMA_PRIORITY_HIGH;
+	adc_dma.Init.Priority = DMA_PRIORITY_MEDIUM;
 	// De-init before init
 	HAL_DMA_DeInit(&adc_dma);
-	HAL_DMA_Init (&adc_dma);
+	HAL_DMA_Init(&adc_dma);
 
 	/* Associate the DMA handle */
 	/* Documentation doesn't really say anything about this, good thing it's in the examples.
@@ -117,7 +120,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
 	HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 1, 0);
 	HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
-#endif
+
 
 
 }

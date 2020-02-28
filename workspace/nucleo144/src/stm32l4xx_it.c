@@ -16,10 +16,13 @@
 #endif
 #include "stm32l4xx_it.h"
 
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern ADC_HandleTypeDef             adc_h;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -39,4 +42,23 @@ void SysTick_Handler(void)
 #ifdef USE_RTOS_SYSTICK
 	osSystickHandler();
 #endif
+}
+
+/******************************************************************************/
+/*                 STM32L4xx Peripherals Interrupt Handlers                   */
+/*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
+/*  available peripheral interrupt handler's name please refer to the startup */
+/*  file (startup_stm32l4xx.s).                                               */
+/******************************************************************************/
+
+/**
+* @brief  This function handles DMA1_Channel1_IRQHandler interrupt request.
+* @param  None
+* @retval None
+*/
+void DMA1_Channel1_IRQHandler(void)
+{
+	/* TODO: See if the following line of code is necessary or not? Says to do in the documentation but example code doesn't have it */
+	//HAL_ADC_IRQHandler(&adc_h);
+	HAL_DMA_IRQHandler(adc_h.DMA_Handle);
 }

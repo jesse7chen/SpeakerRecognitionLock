@@ -284,15 +284,16 @@ typedef enum
 
 #define NUCLEO_ADCx                               ADC1
 
-#define NUCLEO_ADCx_CHANNEL                       ADC_CHANNEL_2
-#define NUCLEO_ADCx_SAMPLETIME                    ADC_SAMPLETIME_24CYCLES_5
+#define NUCLEO_ADCx_CHANNEL                       ADC_CHANNEL_9
+#define NUCLEO_ADCx_SAMPLETIME                    ADC_SAMPLETIME_2CYCLES_5
 #define NUCLEO_ADCx_CLK_ENABLE()                  __HAL_RCC_ADC_CLK_ENABLE()
 #define NUCLEO_ADCx_CLK_DISABLE()                 __HAL_RCC_ADC_CLK_DISABLE()
 
-#define NUCLEO_ADCx_GPIO_PORT                       GPIOC
-#define NUCLEO_ADCx_GPIO_PIN                        GPIO_PIN_1
-#define NUCLEO_ADCx_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOC_CLK_ENABLE()
-#define NUCLEO_ADCx_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOC_CLK_DISABLE()
+// Previously these values were channel 2, pin C1
+#define NUCLEO_ADCx_GPIO_PORT                       GPIOA
+#define NUCLEO_ADCx_GPIO_PIN                        GPIO_PIN_4
+#define NUCLEO_ADCx_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOA_CLK_ENABLE()
+#define NUCLEO_ADCx_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOA_CLK_DISABLE()
 
 #endif /* HAL_ADC_MODULE_ENABLED */
 
