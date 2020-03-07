@@ -225,7 +225,7 @@ typedef enum
    conditions (interrupts routines ...). */
 #define NUCLEO_SPIx_TIMEOUT_MAX                   1000
 
-// #define NUCLEO_SPIx_CS_AF                            Not applicable at the moment   
+// #define NUCLEO_SPIx_CS_AF                            Not applicable at the moment
 #define NUCLEO_SPIx_CS_GPIO_PORT                        GPIOD
 #define NUCLEO_SPIx_CS_PIN                              GPIO_PIN_14
 #define NUCLEO_SPIx_CS_GPIO_CLK_ENABLE()                __HAL_RCC_GPIOD_CLK_ENABLE()
@@ -284,16 +284,17 @@ typedef enum
 
 #define NUCLEO_ADCx                               ADC1
 
-#define NUCLEO_ADCx_CHANNEL                       ADC_CHANNEL_9
-#define NUCLEO_ADCx_SAMPLETIME                    ADC_SAMPLETIME_2CYCLES_5
+#define NUCLEO_ADCx_CHANNEL                       ADC_CHANNEL_2
+/* Sampling every 24.5 ADC cycles with /2 divisor = ~50 kHz sampling rate */
+#define NUCLEO_ADCx_SAMPLETIME                    ADC_SAMPLETIME_24CYCLES_5
 #define NUCLEO_ADCx_CLK_ENABLE()                  __HAL_RCC_ADC_CLK_ENABLE()
 #define NUCLEO_ADCx_CLK_DISABLE()                 __HAL_RCC_ADC_CLK_DISABLE()
 
 // Previously these values were channel 2, pin C1
-#define NUCLEO_ADCx_GPIO_PORT                       GPIOA
-#define NUCLEO_ADCx_GPIO_PIN                        GPIO_PIN_4
-#define NUCLEO_ADCx_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOA_CLK_ENABLE()
-#define NUCLEO_ADCx_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOA_CLK_DISABLE()
+#define NUCLEO_ADCx_GPIO_PORT                       GPIOC
+#define NUCLEO_ADCx_GPIO_PIN                        GPIO_PIN_1
+#define NUCLEO_ADCx_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOC_CLK_ENABLE()
+#define NUCLEO_ADCx_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOC_CLK_DISABLE()
 
 #endif /* HAL_ADC_MODULE_ENABLED */
 

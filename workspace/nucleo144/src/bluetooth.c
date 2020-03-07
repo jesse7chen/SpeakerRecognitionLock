@@ -88,7 +88,7 @@ HAL_StatusTypeDef sendSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t
 
 HAL_StatusTypeDef sendMultiSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload){
   uint8_t packetLen;
-  // Make this an int  so that it can decrement less than 0
+  // Make this an int so that it can decrement less than 0
   int8_t bytesLeft = len;
   HAL_StatusTypeDef ret = HAL_ERROR;
 

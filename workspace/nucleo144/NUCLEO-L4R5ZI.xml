@@ -12,8 +12,8 @@
 <targetDefinitions>
   <board id="nucleo-l4r5zi">
     <name>NUCLEO-L4R5ZI</name>
-    <dbgIF>SWD</dbgIF>
     <dbgIF>JTAG</dbgIF>
+    <dbgIF>SWD</dbgIF>
     <dbgDEV>ST-Link</dbgDEV>
     <mcuId>stm32l4r5zitx</mcuId>
   </board>

@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/adc.c \
 ../src/bluetooth.c \
 ../src/main.c \
 ../src/stm32l4xx_hal_msp.c \
@@ -12,6 +13,7 @@ C_SRCS += \
 ../src/system_stm32l4xx.c 
 
 OBJS += \
+./src/adc.o \
 ./src/bluetooth.o \
 ./src/main.o \
 ./src/stm32l4xx_hal_msp.o \
@@ -20,6 +22,7 @@ OBJS += \
 ./src/system_stm32l4xx.o 
 
 C_DEPS += \
+./src/adc.d \
 ./src/bluetooth.d \
 ./src/main.d \
 ./src/stm32l4xx_hal_msp.d \

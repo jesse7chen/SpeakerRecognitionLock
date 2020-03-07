@@ -22,6 +22,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern ADC_HandleTypeDef             adc_h;
+extern GPIO_InitTypeDef              test_pin;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -60,5 +61,7 @@ void DMA1_Channel1_IRQHandler(void)
 {
 	/* TODO: See if the following line of code is necessary or not? Says to do in the documentation but example code doesn't have it */
 	//HAL_ADC_IRQHandler(&adc_h);
+    /* For debug purposes, toggle this pin */
+    // HAL_GPIO_TogglePin(GPIOC, test_pin.Pin);
 	HAL_DMA_IRQHandler(adc_h.DMA_Handle);
 }

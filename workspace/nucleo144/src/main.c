@@ -13,6 +13,7 @@
 #include "stm32l4xx.h"
 #include "stm32l4xx_nucleo_144.h"
 #include "bluetooth.h"
+#include "adc.h"
 #include <stdio.h>
 
 /** @addtogroup STM32L4xx_HAL_Examples
@@ -28,15 +29,27 @@
 #define AUDIO_DATA_BUFFER_SIZE ((uint32_t)  32)   /* Size of array aADCxConvertedData[] */
 #define VREF ((double)3.2) /* Empirically tested with a voltage supply - probably should compare to internal vref */
 
+#define VDDA_APPLI                     ((uint32_t) 3300)    /* Value of analog voltage supply Vdda (unit: mV) */
+#define RANGE_12BITS                   ((uint32_t) 4095)    /* Max digital value with a full range of 12 bits */
+
+/* ADC parameters */
+#define ADCCONVERTEDVALUES_BUFFER_SIZE ((uint32_t)    3)    /* Size of array containing ADC converted values: set to ADC sequencer number of ranks converted, to have a rank in each address */
+
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static SPI_HandleTypeDef spi_h;
 static char test_string[] = "Test string\r\n";
-ADC_HandleTypeDef adc_h;
-ADC_ChannelConfTypeDef adc_chan_conf;
+
+GPIO_InitTypeDef test_pin;
+extern ADC_HandleTypeDef adc_h;
 
 /* Contains ADC data from microphone */
 static uint16_t   audio_data[AUDIO_DATA_BUFFER_SIZE];
+
+/* Seems like shortest ADC sampling time for Vintref is 4us
+Might wanna enable BOOSTEN so that sample time is always short?
+*/
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -81,57 +94,16 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED3);
 
-// Initialize ADC handler
-  adc_h.Instance = NUCLEO_ADCx;
 
-  if (HAL_ADC_DeInit(&adc_h) != HAL_OK)
-  {
-    /* ADC de-initialization Error */
-    Error_Handler();
+  adcInit();
+  adcChannelsInit();
+
+  /* Calibrate ADC */
+  if (HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED) != HAL_OK){
+      Error_Handler();
   }
 
-  adc_h.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2; /* We choose a synchronous clock in msp_init and we choose /2 because
-  that's the fastest we can do unless system clock is already prescaled by 2*/
-  adc_h.Init.Resolution = ADC_RESOLUTION_12B; // Highest possible resolution
-  /* The register that holds our conversion results is 16 bits wide (ADC_DR)
-   * Right justified means that MSBs are set to zero (bits 15-12)
-   * Left justified means that LSBs are set to zero (bits 0-3)
-   * Left justified could be useful if you just wanted to grab the most significant byte and din't need the extra two
-   * bytes of precision
-   * Right justified is probably better for our needs since we want all 12 bits of precision and don't want to scale,
-   * which you would have to do if you wanted the entire value from a left justified register */
-  adc_h.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  /* Seems like this enables/disables sequence scanning, which allows for automatic sequential scanning of multiple channels */
-  adc_h.Init.ScanConvMode = DISABLE;
-  /* Choose single conversion End of Conversion flag since sequencer is not enabled */
-  adc_h.Init.EOCSelection =  ADC_EOC_SINGLE_CONV;
-  /* Supposed to be used with polling systems. Basically waits to start new conversion until previous conversion has been retrieved.
-   * This will just lead to stale data if I use it though */
-  adc_h.Init.LowPowerAutoWait = DISABLE;
-  /* Automatically restart conversion after each conversion */
-  adc_h.Init.ContinuousConvMode = ENABLE;
-  /* Only converting on one channel for now */
-  adc_h.Init.NbrOfConversion = 1;
-  /* Specifies (if we have a sequence) if we want to split sequencer conversion into multiple successive parts */
-  adc_h.Init.DiscontinuousConvMode = DISABLE;
-  /* Not even using this parameter, but it's the number of discontinuous conversions that the sequencer will be subdivided into */
-  adc_h.Init.NbrOfDiscConversion = 1;
-  /* We want FW to trigger conversion start */
-  adc_h.Init.ExternalTrigConv =  ADC_SOFTWARE_START;
-  /* We have a software trigger so the trigger edge doesn't matter */
-  adc_h.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  /* Select whether DMA requests are done in a single shot or if the DMA transfer is unlimited (DMA must be in circular mode) */
-  adc_h.Init.DMAContinuousRequests = ENABLE;
-  /* Data should be overwritten with last conversion result in case of overrun since we don't want stale data
-   * We do always want the latest data, though ideally there shouldn't be any overrun.
-   * Since we are in DMA mode, an error is reported for whatever overrun setting since DMA is expected to process all data from register */
-  adc_h.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
-  /* Oversampler can do data pre-processing to offload CPU, such as averaging, SNR improvement, and filtering. Won't use it for now, but
-   * might want to enable it in the future. Can't see any reason to want to do this though */
-  adc_h.Init.OversamplingMode = DISABLE;
-  /* adc_h.Init.Oversampling = insert structure here if you wanted to actually do oversampling */
-
-// Initialize SPI handler
+  // Initialize SPI handler
   spi_h.Instance = SPI1;
   // Specify if board is master or slave
   spi_h.Init.Mode = SPI_MODE_MASTER;
@@ -164,31 +136,6 @@ int main(void)
   * between two consecutive data frames. Doesn't matter as we have software NSS */
   spi_h.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
 
-  if(HAL_ADC_Init(&adc_h) != HAL_OK){
-	  /* Initialization error */
-	  Error_Handler();
-  }
-
-  /* Calibrate ADC */
-  if (HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED) != HAL_OK){
-	  Error_Handler();
-  }
-
-  /* Configure ADC channels */
-  adc_chan_conf.Channel = NUCLEO_ADCx_CHANNEL;
-  adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
-  /* Sample every 2.5 ADC clock cycles - this is the fastest possible time */
-  adc_chan_conf.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
-  /* Channel is single ended */
-  adc_chan_conf.SingleDiff = ADC_SINGLE_ENDED;
-  /* We don't want a channel offset, the microphone bias should fit within the ~3.6V range of the ADC */
-  adc_chan_conf.OffsetNumber = ADC_OFFSET_NONE;
-  adc_chan_conf.Offset = 0;
-
-  if (HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf) != HAL_OK){
-	  Error_Handler();
-  }
-
   if(HAL_SPI_Init(&spi_h) != HAL_OK)
   {
     /* Initialization Error */
@@ -198,12 +145,39 @@ int main(void)
 
   bleInit(&spi_h);
 
+  /* Init some GPIO test pin on same block as ADC */
+  test_pin.Pin = GPIO_PIN_4;
+  // Not the same as GPIO_MODE_ANALOG
+  test_pin.Mode = GPIO_MODE_OUTPUT_PP;
+  test_pin.Pull = GPIO_PULLUP;
+  test_pin.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  // Alternate shouldn't matter since ADC is the pin's main function
+  test_pin.Alternate = 0x00;
+  HAL_GPIO_Init(NUCLEO_ADCx_GPIO_PORT, &test_pin);
 
-  /* */
+
+/* */
+/* Start ADC reads */
+  if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
+      Error_Handler();
+  }
+
+  HAL_Delay(500);
+
+  // Stop DMA reads
+  if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
+    Error_Handler();
+  }
+
+  // Switch channel rankings
+  calibrateVRefInt();
+
   /* Start ADC reads */
-	if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
-		Error_Handler();
-	}
+  if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
+      Error_Handler();
+  }
+
+  HAL_Delay(500);
 
   /* Infinite loop */
   while (1)
