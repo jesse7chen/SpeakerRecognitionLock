@@ -7,6 +7,8 @@ C_SRCS += \
 ../src/adc.c \
 ../src/bluetooth.c \
 ../src/main.c \
+../src/microphone.c \
+../src/state_machine.c \
 ../src/stm32l4xx_hal_msp.c \
 ../src/stm32l4xx_it.c \
 ../src/syscalls.c \
@@ -16,6 +18,8 @@ OBJS += \
 ./src/adc.o \
 ./src/bluetooth.o \
 ./src/main.o \
+./src/microphone.o \
+./src/state_machine.o \
 ./src/stm32l4xx_hal_msp.o \
 ./src/stm32l4xx_it.o \
 ./src/syscalls.o \
@@ -25,6 +29,8 @@ C_DEPS += \
 ./src/adc.d \
 ./src/bluetooth.d \
 ./src/main.d \
+./src/microphone.d \
+./src/state_machine.d \
 ./src/stm32l4xx_hal_msp.d \
 ./src/stm32l4xx_it.d \
 ./src/syscalls.d \

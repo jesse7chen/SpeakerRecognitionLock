@@ -15,6 +15,7 @@
 #include <cmsis_os.h>
 #endif
 #include "stm32l4xx_it.h"
+#include "stm32l4xx_nucleo_144.h"
 
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,4 +65,14 @@ void DMA1_Channel1_IRQHandler(void)
     /* For debug purposes, toggle this pin */
     // HAL_GPIO_TogglePin(GPIOC, test_pin.Pin);
 	HAL_DMA_IRQHandler(adc_h.DMA_Handle);
+}
+
+/**
+  * @brief  This function handles external lines 10 to 15 interrupt request.
+  * @param  None
+  * @retval None
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
 }

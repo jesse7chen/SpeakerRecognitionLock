@@ -100,6 +100,8 @@
 "src/adc.o"
 "src/bluetooth.o"
 "src/main.o"
+"src/microphone.o"
+"src/state_machine.o"
 "src/stm32l4xx_hal_msp.o"
 "src/stm32l4xx_it.o"
 "src/syscalls.o"

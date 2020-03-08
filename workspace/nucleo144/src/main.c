@@ -14,6 +14,7 @@
 #include "stm32l4xx_nucleo_144.h"
 #include "bluetooth.h"
 #include "adc.h"
+#include "state_machine.h"
 #include <stdio.h>
 
 /** @addtogroup STM32L4xx_HAL_Examples
@@ -26,15 +27,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define AUDIO_DATA_BUFFER_SIZE ((uint32_t)  32)   /* Size of array aADCxConvertedData[] */
-#define VREF ((double)3.2) /* Empirically tested with a voltage supply - probably should compare to internal vref */
-
-#define VDDA_APPLI                     ((uint32_t) 3300)    /* Value of analog voltage supply Vdda (unit: mV) */
-#define RANGE_12BITS                   ((uint32_t) 4095)    /* Max digital value with a full range of 12 bits */
-
-/* ADC parameters */
-#define ADCCONVERTEDVALUES_BUFFER_SIZE ((uint32_t)    3)    /* Size of array containing ADC converted values: set to ADC sequencer number of ranks converted, to have a rank in each address */
-
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -44,8 +36,6 @@ static char test_string[] = "Test string\r\n";
 GPIO_InitTypeDef test_pin;
 extern ADC_HandleTypeDef adc_h;
 
-/* Contains ADC data from microphone */
-static uint16_t   audio_data[AUDIO_DATA_BUFFER_SIZE];
 
 /* Seems like shortest ADC sampling time for Vintref is 4us
 Might wanna enable BOOSTEN so that sample time is always short?
@@ -72,6 +62,7 @@ static void Error_Handler(void)
   */
 int main(void)
 {
+  static sm_state_t state;
 
   /* STM32L4xx HAL library initialization:
        - Configure the Flash prefetch, Flash preread and Buffer caches
@@ -87,17 +78,23 @@ int main(void)
   /* Configure the System clock to have a frequency of 120 MHz */
   SystemClock_Config();
 
+  /* Configure button as external interrupt generator */
+  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
 
   /* Add your application code here
      */
   // Configure LED1
   BSP_LED_Init(LED1);
+  BSP_LED_Init(LED2);
   BSP_LED_Init(LED3);
 
 
-  adcInit();
-  adcChannelsInit();
-
+  if (adcInit() !=  HAL_OK){
+    Error_Handler();
+  }
+  if (adcChannelsInit() != HAL_OK){
+    Error_Handler();
+  }
   /* Calibrate ADC */
   if (HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED) != HAL_OK){
       Error_Handler();
@@ -158,42 +155,44 @@ int main(void)
 
 /* */
 /* Start ADC reads */
-  if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
-      Error_Handler();
-  }
-
-  HAL_Delay(500);
-
-  // Stop DMA reads
-  if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
-    Error_Handler();
-  }
-
-  // Switch channel rankings
-  calibrateVRefInt();
-
-  /* Start ADC reads */
-  if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
-      Error_Handler();
-  }
-
-  HAL_Delay(500);
+  // if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
+  //     Error_Handler();
+  // }
+  //
+  // HAL_Delay(500);
+  //
+  // // Stop DMA reads
+  // if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
+  //   Error_Handler();
+  // }
+  //
+  // // Switch channel rankings
+  // calibrateVRefInt();
+  //
+  // /* Start ADC reads */
+  // if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
+  //     Error_Handler();
+  // }
+  //
+  // HAL_Delay(500);
 
   /* Infinite loop */
+
+  state = stateStandby;
   while (1)
   {
-
+    smRun(&state);
 	// Blink LED1
-	BSP_LED_On(LED1);
-	bleWriteUART(test_string, sizeof(test_string));
-	HAL_Delay(500);
-
-//	if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
-//	  Error_Handler();
-//	}
-
-	BSP_LED_Off(LED1);
-	HAL_Delay(500);
+// 	BSP_LED_On(LED1);
+// 	bleWriteUART(test_string, sizeof(test_string));
+// 	HAL_Delay(500);
+//
+// //	if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
+// //	  Error_Handler();
+// //	}
+//
+// 	BSP_LED_Off(LED1);
+// 	HAL_Delay(500);
   }
 }
 /* End of main function */
