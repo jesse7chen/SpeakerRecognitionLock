@@ -28,6 +28,12 @@
 *.so.*
 *.dylib
 
+# Build folder
+cmake-build*/
+
+# Output folder
+output/
+
 # Executables
 *.exe
 *.out
@@ -35,6 +41,7 @@
 *.i*86
 *.x86_64
 *.hex
+*.bin
 
 # Debug files
 *.dSYM/
