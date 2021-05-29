@@ -4,7 +4,7 @@
 #include "stm32l4xx.h"
 #include "common.h"
 
-HAL_StatusTypeDef startRecord(void);
-HAL_StatusTypeDef stopRecord(void);
+HAL_StatusTypeDef Mic_StartRecord(void);
+HAL_StatusTypeDef Mic_StopRecord(void);
 
 #endif /* __MICROPHONE_H */

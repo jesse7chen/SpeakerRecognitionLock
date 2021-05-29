@@ -22,26 +22,26 @@
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
-#define AUDIO_DATA_BUFFER_SIZE ((uint32_t)  32)   /* Size of array audio_data[] */
+#define AUDIO_DATA_BUFFER_SIZE ((uint32_t)  32)   /* Size of array m_AudioBuff[] */
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern ADC_HandleTypeDef adc_h;
 /* Contains ADC data from microphone */
-static uint16_t   audio_data[AUDIO_DATA_BUFFER_SIZE];
+static uint16_t m_AudioBuff[AUDIO_DATA_BUFFER_SIZE];
 
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
 
-HAL_StatusTypeDef startRecord(void){
+HAL_StatusTypeDef Mic_StartRecord(void){
     BSP_LED_On(LED2);
-    return HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE);
+    return HAL_ADC_Start_DMA(&adc_h, (uint32_t*)m_AudioBuff, AUDIO_DATA_BUFFER_SIZE);
 
 }
 
-HAL_StatusTypeDef stopRecord(void){
+HAL_StatusTypeDef Mic_StopRecord(void){
     /* Clear buffer beforehand maybe */
     BSP_LED_Off(LED2);
     return HAL_ADC_Stop_DMA(&adc_h);

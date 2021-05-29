@@ -13,12 +13,12 @@
 
 static uint8_t m_eventTable[EVENT_MAX];
 
-void eventInit(void){
+void Event_Init(void){
     // Reset event table
     memset(m_eventTable, 0, sizeof(uint8_t)*EVENT_MAX);
 }
 
-void eventSet(EVENT_T event){
+void Event_Set(EVENT_T event){
     // Range check event
     if(event >= EVENT_MIN && event < EVENT_MAX)
     {
@@ -26,14 +26,14 @@ void eventSet(EVENT_T event){
     }
 }
 
-void eventClear(EVENT_T event){
+void Event_Clear(EVENT_T event){
     if(event >= EVENT_MIN && event < EVENT_MAX)
     {
         m_eventTable[event] = 0;
     }
 }
 
-uint8_t eventGet(EVENT_T event){
+uint8_t Event_Get(EVENT_T event){
     uint8_t numEvents = 0;
     if(event >= EVENT_MIN && event < EVENT_MAX)
     {
@@ -48,7 +48,7 @@ uint8_t eventGet(EVENT_T event){
     return numEvents;
 }
 
-uint8_t eventGetAndDecrement(EVENT_T event){
+uint8_t Event_GetAndDecrement(EVENT_T event){
     uint8_t numEvents = 0;
     if(event >= EVENT_MIN && event < EVENT_MAX)
     {
@@ -65,7 +65,7 @@ uint8_t eventGetAndDecrement(EVENT_T event){
     return numEvents;
 }
 
-uint8_t eventGetAndClear(EVENT_T event){
+uint8_t Event_GetAndClear(EVENT_T event){
     uint8_t numEvents = 0;
     if(event >= EVENT_MIN && event < EVENT_MAX)
     {

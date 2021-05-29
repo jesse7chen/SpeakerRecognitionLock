@@ -87,11 +87,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == USER_BUTTON_PIN)
   {
-    buttonDebounceCallback();
+    Button_DebounceCallback();
   }
 }
 
 void TIM2_IRQHandler(void)
 {
-    HAL_TIM_IRQHandler(getButtonDebounceTmrHandle());
+    HAL_TIM_IRQHandler(Button_GetDebounceTmrHandle());
 }

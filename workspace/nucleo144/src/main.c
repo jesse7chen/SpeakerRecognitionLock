@@ -79,7 +79,8 @@ int main(void)
   /* Configure the System clock to have a frequency of 120 MHz */
   SystemClock_Config();
 
-  buttonInit();
+  Button_Init();
+  Event_Init();
 
   /* Add your application code here
      */
@@ -89,10 +90,10 @@ int main(void)
   BSP_LED_Init(LED3);
 
 
-  if (adcInit() !=  HAL_OK){
+  if (ADC_Init() !=  HAL_OK){
     Error_Handler();
   }
-  if (adcChannelsInit() != HAL_OK){
+  if (ADC_InitChannels() != HAL_OK){
     Error_Handler();
   }
   /* Calibrate ADC */
@@ -140,7 +141,7 @@ int main(void)
     Error_Handler();
   }
 
-  bleInit(&spi_h);
+  BLE_Init(&spi_h);
 
   /* Init some GPIO test pin on same block as ADC */
   test_pin.Pin = GPIO_PIN_4;
@@ -167,7 +168,7 @@ int main(void)
   // }
   //
   // // Switch channel rankings
-  // calibrateVRefInt();
+  // ADC_CalibrateVRefInt();
   //
   // /* Start ADC reads */
   // if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
@@ -184,7 +185,7 @@ int main(void)
     smRun(&state);
 	// Blink LED1
 // 	BSP_LED_On(LED1);
-// 	bleWriteUART(test_string, sizeof(test_string));
+// 	BLE_WriteUART(test_string, sizeof(test_string));
 // 	HAL_Delay(500);
 //
 // //	if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){

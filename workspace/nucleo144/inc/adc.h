@@ -7,9 +7,9 @@
 #define CALIBRATE_MODE ((uint8_t) 0UL)
 #define RECORD_MODE ((uint8_t) 1UL)
 
-HAL_StatusTypeDef changeADCMode(uint8_t mode);
-HAL_StatusTypeDef adcInit(void);
-HAL_StatusTypeDef adcChannelsInit(void);
-HAL_StatusTypeDef calibrateVRefInt(void);
+HAL_StatusTypeDef ADC_ChangeMode(uint8_t mode);
+HAL_StatusTypeDef ADC_Init(void);
+HAL_StatusTypeDef ADC_InitChannels(void);
+HAL_StatusTypeDef ADC_CalibrateVRefInt(void);
 
 #endif /* __ADC_H */

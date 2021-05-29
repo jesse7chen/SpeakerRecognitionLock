@@ -10,11 +10,11 @@ typedef enum EVENT_T
     EVENT_MAX
 } EVENT_T;
 
-void eventInit(void);
-void eventSet(EVENT_T event);
-void eventClear(EVENT_T event);
-uint8_t eventGet(EVENT_T event);
-uint8_t eventGetAndDecrement(EVENT_T event);
-uint8_t eventGetAndClear(EVENT_T event);
+void Event_Init(void);
+void Event_Set(EVENT_T event);
+void Event_Clear(EVENT_T event);
+uint8_t Event_Get(EVENT_T event);
+uint8_t Event_GetAndDecrement(EVENT_T event);
+uint8_t Event_GetAndClear(EVENT_T event);
 
 #endif /* __EVENTS_H */

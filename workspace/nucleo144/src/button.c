@@ -27,9 +27,9 @@ static uint16_t m_consecutiveCounts = 0;
 static bool m_lastPressedValue = false;
 
 /* Private function prototypes -----------------------------------------------*/
-static void handleDebounce(void);
+static void HandleDebounce(void);
 
-bool buttonInit(void){
+bool Button_Init(void){
     bool success = true;
 
     /* Configure button as external interrupt generator */
@@ -56,7 +56,7 @@ bool buttonInit(void){
     return success;
 }
 
-void buttonDebounceCallback(void){
+void Button_DebounceCallback(void){
     if(m_debounceFlag == false)
     {
         m_debounceFlag = true;
@@ -64,7 +64,7 @@ void buttonDebounceCallback(void){
     }
 }
 
-TIM_HandleTypeDef* getButtonDebounceTmrHandle(void){
+TIM_HandleTypeDef* Button_GetDebounceTmrHandle(void){
     return &m_buttonTmr;
 }
 
@@ -76,7 +76,7 @@ TIM_HandleTypeDef* getButtonDebounceTmrHandle(void){
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if(htim == &m_buttonTmr){
-      handleDebounce();
+      HandleDebounce();
   }
 }
 
@@ -100,7 +100,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
     }
 }
 
-static void handleDebounce(void){
+static void HandleDebounce(void){
     GPIO_PinState pinState =
         HAL_GPIO_ReadPin(USER_BUTTON_GPIO_PORT, USER_BUTTON_PIN);
 
@@ -119,7 +119,7 @@ static void handleDebounce(void){
         m_debounceFlag = false;
         // If button was pressed, set event
         if (pressed == true){
-            eventSet(EVENT_USER_BUTTON_PRESS);
+            Event_Set(EVENT_USER_BUTTON_PRESS);
         }
         HAL_TIM_Base_Stop_IT(&m_buttonTmr);
     }

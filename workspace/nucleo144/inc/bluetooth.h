@@ -46,10 +46,10 @@
 //TODO: Look into making some kind of static SPI_HandleTypeDef for bluetooth, so we don't have to pass in this stuff
 // Perhaps make it part of the init function?
 
-HAL_StatusTypeDef bleInit(SPI_HandleTypeDef* hspi);
-HAL_StatusTypeDef bleWriteUART(char* s, uint8_t len);
-HAL_StatusTypeDef bleSendAT(char* cmd, uint8_t len);
-HAL_StatusTypeDef sendSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload);
-HAL_StatusTypeDef sendMultiSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload);
+HAL_StatusTypeDef BLE_Init(SPI_HandleTypeDef* hspi);
+HAL_StatusTypeDef BLE_WriteUART(char* s, uint8_t len);
+HAL_StatusTypeDef BLE_SendAT(char* cmd, uint8_t len);
+HAL_StatusTypeDef BLE_SendSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload);
+HAL_StatusTypeDef BLE_SendMultiSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload);
 
 #endif /* __BLUETOOTH_H */

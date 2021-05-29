@@ -30,24 +30,24 @@
 #define CAL_DATA_SIZE ((uint32_t)  64)
 #define CAL_TIMEOUT ((uint32_t) 10UL)
 
-#define COMPUTE_VREF_INT(VREF_RAW_DATA)                        \
+#define COMPUTE_m_VrefInt(VREF_RAW_DATA)                        \
   ( (VREFINT_CAL_VREF * (*VREFINT_CAL_ADDR)) / (VREF_RAW_DATA))
 
 #define COMPUTE_ADC_12BIT_TO_MV(ADC_DATA)                        \
-  ( ((ADC_DATA) * vref_int) / RANGE_12BITS)
+  ( ((ADC_DATA) * m_VrefInt) / RANGE_12BITS)
 
 /* Statics/Globals------------------------------------------------------------*/
 ADC_HandleTypeDef adc_h;
 /* Fast channels are: PC0, PC1, PC2, PC3, PA0. */
-static ADC_ChannelConfTypeDef adc_chan_conf;
-static uint16_t   cal_data[CAL_DATA_SIZE];
+static ADC_ChannelConfTypeDef m_AdcChanConfig;
+static uint16_t m_CalData[CAL_DATA_SIZE];
 
 /* Not sure if I should make this a float or not considering the computation resources that may cost */
-static uint16_t vref_int = 0;
-static volatile uint8_t  vref_done = RESET;
+static uint16_t m_VrefInt = 0;
+static volatile uint8_t m_VrefDone = RESET;
 
 /* This is expected to be called after ADC init */
-HAL_StatusTypeDef changeADCMode(uint8_t mode){
+HAL_StatusTypeDef ADC_ChangeMode(uint8_t mode){
   HAL_StatusTypeDef retVal = HAL_OK;
 
 
@@ -64,19 +64,19 @@ HAL_StatusTypeDef changeADCMode(uint8_t mode){
     assert_param(HAL_ADC_Init(&adc_h) == HAL_OK);
 
     /* Change relevant ADC channel parameters */
-    adc_chan_conf.Channel = NUCLEO_ADCx_CHANNEL;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
-    adc_chan_conf.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = NUCLEO_ADCx_CHANNEL;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_1;
+    m_AdcChanConfig.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
-    adc_chan_conf.Channel = ADC_CHANNEL_VREFINT;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_2;
-    adc_chan_conf.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = ADC_CHANNEL_VREFINT;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_2;
+    m_AdcChanConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
-    adc_chan_conf.Channel = ADC_CHANNEL_TEMPSENSOR;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_3;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_3;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
     retVal |= HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED);
 
@@ -89,19 +89,19 @@ HAL_StatusTypeDef changeADCMode(uint8_t mode){
     assert_param(HAL_ADC_Init(&adc_h) == HAL_OK);
 
     /* Change relevant ADC channel parameters */
-    adc_chan_conf.Channel = NUCLEO_ADCx_CHANNEL;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_3;
-    adc_chan_conf.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = NUCLEO_ADCx_CHANNEL;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_3;
+    m_AdcChanConfig.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
-    adc_chan_conf.Channel = ADC_CHANNEL_VREFINT;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
-    adc_chan_conf.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = ADC_CHANNEL_VREFINT;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_1;
+    m_AdcChanConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
-    adc_chan_conf.Channel = ADC_CHANNEL_TEMPSENSOR;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_2;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_2;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
     retVal |= HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED);
 
@@ -116,7 +116,7 @@ HAL_StatusTypeDef changeADCMode(uint8_t mode){
 
 }
 
-HAL_StatusTypeDef calibrateVRefInt(void){
+HAL_StatusTypeDef ADC_CalibrateVRefInt(void){
   uint32_t tickstart;
   uint8_t i = 0;
   uint32_t vref_sum = 0;
@@ -126,21 +126,21 @@ HAL_StatusTypeDef calibrateVRefInt(void){
    * Would do a softer failure for production code of course */
   // assert_param((ADC_IS_ENABLE(&adc_h)) == RESET);
 
-  // adc_chan_conf.Channel = ADC_CHANNEL_VREFINT;
-  // adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
-  // /* Choose slowest sampling time so we can catch variation across Vref_int if any */
-  // adc_chan_conf.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+  // m_AdcChanConfig.Channel = ADC_CHANNEL_VREFINT;
+  // m_AdcChanConfig.Rank = ADC_REGULAR_RANK_1;
+  // /* Choose slowest sampling time so we can catch variation across m_VrefInt if any */
+  // m_AdcChanConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
   //
-  // assert_param(HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf) == HAL_OK);
+  // assert_param(HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig) == HAL_OK);
   //
-  // adc_chan_conf.Rank = ADC_REGULAR_RANK_2;
-  // assert_param(HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf) == HAL_OK);
+  // m_AdcChanConfig.Rank = ADC_REGULAR_RANK_2;
+  // assert_param(HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig) == HAL_OK);
 
-  assert_param(changeADCMode(CALIBRATE_MODE) == HAL_OK);
+  assert_param(ADC_ChangeMode(CALIBRATE_MODE) == HAL_OK);
 
-  vref_done = RESET;
+  m_VrefDone = RESET;
 
-  assert_param(HAL_ADC_Start_DMA(&adc_h, (uint32_t*)cal_data, CAL_DATA_SIZE) == HAL_OK);
+  assert_param(HAL_ADC_Start_DMA(&adc_h, (uint32_t*)m_CalData, CAL_DATA_SIZE) == HAL_OK);
 
   // if (HAL_ADC_PollForEvent(&adc_h, ADC_EOSMP_EVENT, 10) != HAL_OK){
   //   /* Must have timed out for some reason */
@@ -150,72 +150,72 @@ HAL_StatusTypeDef calibrateVRefInt(void){
 
  /* If calibration doesn't finish by timeout period, return error */
   tickstart = HAL_GetTick();
-  while(vref_done != SET){
+  while(m_VrefDone != SET){
     if (((HAL_GetTick() - tickstart) > CAL_TIMEOUT) || (CAL_TIMEOUT == 0UL)) {
       return HAL_TIMEOUT;
     }
   }
 
   HAL_ADC_Stop_DMA(&adc_h);
-  vref_done = RESET;
+  m_VrefDone = RESET;
 
-  /* Average out values in buffer to get Vref_int (oversampler can do this for us but seems unnecessary
+  /* Average out values in buffer to get m_VrefInt (oversampler can do this for us but seems unnecessary
    * if this doesn't occur often and CPU isn't doing anything else */
   for(; i < CAL_DATA_SIZE; i++){
     if(i%2){
-      temp_sum += cal_data[i];
+      temp_sum += m_CalData[i];
     }
     else{
-      vref_sum += cal_data[i];
+      vref_sum += m_CalData[i];
     }
   }
 
-  vref_int = COMPUTE_VREF_INT(vref_sum/CAL_DATA_SIZE);
+  m_VrefInt = COMPUTE_m_VrefInt(vref_sum/CAL_DATA_SIZE);
 
   /* Change back to record mode when done, to microphone module it should seem like nothing has changed */
-  assert_param(changeADCMode(RECORD_MODE) == HAL_OK);
+  assert_param(ADC_ChangeMode(RECORD_MODE) == HAL_OK);
   return HAL_OK;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *AdcHandle)
 {
   /* Report to main program that DMA has filled array */
-  vref_done = SET;
+  m_VrefDone = SET;
 }
 
 
-HAL_StatusTypeDef adcChannelsInit(void){
+HAL_StatusTypeDef ADC_InitChannels(void){
     HAL_StatusTypeDef retVal = HAL_OK;
 
   /* Configure microphone ADC channel */
-    adc_chan_conf.Channel = NUCLEO_ADCx_CHANNEL;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_1;
+    m_AdcChanConfig.Channel = NUCLEO_ADCx_CHANNEL;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_1;
     /* Sample every x ADC clock cycles - seems like fastest sampling rate will prevent SPI BLE from working */
-    adc_chan_conf.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
-    //adc_chan_conf.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
+    m_AdcChanConfig.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
+    //m_AdcChanConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
     /* Channel is single ended */
-    adc_chan_conf.SingleDiff = ADC_SINGLE_ENDED;
+    m_AdcChanConfig.SingleDiff = ADC_SINGLE_ENDED;
     /* We don't want a channel offset, the microphone bias should fit within the ~3.3V range of the ADC */
-    adc_chan_conf.OffsetNumber = ADC_OFFSET_NONE;
-    adc_chan_conf.Offset = 0;
+    m_AdcChanConfig.OffsetNumber = ADC_OFFSET_NONE;
+    m_AdcChanConfig.Offset = 0;
 
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
     /* Todo: Add sequencer settings to ADC */
   /* Configure internal reference voltage channel */
-    adc_chan_conf.Channel = ADC_CHANNEL_VREFINT;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_2;
-    adc_chan_conf.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
+    m_AdcChanConfig.Channel = ADC_CHANNEL_VREFINT;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_2;
+    m_AdcChanConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
 
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
-    adc_chan_conf.Channel = ADC_CHANNEL_TEMPSENSOR;
-    adc_chan_conf.Rank = ADC_REGULAR_RANK_3;
-    retVal |= HAL_ADC_ConfigChannel(&adc_h, &adc_chan_conf);
+    m_AdcChanConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+    m_AdcChanConfig.Rank = ADC_REGULAR_RANK_3;
+    retVal |= HAL_ADC_ConfigChannel(&adc_h, &m_AdcChanConfig);
 
     return retVal;
 }
 
-HAL_StatusTypeDef adcInit(void){
+HAL_StatusTypeDef ADC_Init(void){
   // Initialize ADC handler
     adc_h.Instance = NUCLEO_ADCx;
 

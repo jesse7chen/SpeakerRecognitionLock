@@ -5,8 +5,8 @@
 #include "stm32l4xx.h"
 #include "stm32l4xx_hal_tim.h"
 
-bool buttonInit(void);
-void buttonDebounceCallback(void);
-TIM_HandleTypeDef* getButtonDebounceTmrHandle(void);
+bool Button_Init(void);
+void Button_DebounceCallback(void);
+TIM_HandleTypeDef* Button_GetDebounceTmrHandle(void);
 
 #endif /* __BUTTON_H */

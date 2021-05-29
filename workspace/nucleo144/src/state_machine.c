@@ -45,8 +45,8 @@ void smRun(sm_state_t* state){
 
     /* Standby state */
     case stateStandby:
-      if (eventGetAndClear(EVENT_USER_BUTTON_PRESS)){
-        if (startRecord() == HAL_OK){
+      if (Event_GetAndClear(EVENT_USER_BUTTON_PRESS)){
+        if (Mic_StartRecord() == HAL_OK){
           *state = stateRec;
         }
         else{
@@ -57,9 +57,9 @@ void smRun(sm_state_t* state){
 
     /* Recording state */
     case stateRec:
-    if (eventGetAndClear(EVENT_USER_BUTTON_PRESS)){
+    if (Event_GetAndClear(EVENT_USER_BUTTON_PRESS)){
 
-      if (stopRecord() == HAL_OK){
+      if (Mic_StopRecord() == HAL_OK){
         *state = stateProc;
       }
       else{
@@ -80,7 +80,7 @@ void smRun(sm_state_t* state){
     /* Calibration state */
     case stateCal:
 
-      if (calibrateVRefInt() == HAL_OK){
+      if (ADC_CalibrateVRefInt() == HAL_OK){
         *state = stateStandby;
       }
       else{

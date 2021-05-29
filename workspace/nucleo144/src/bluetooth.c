@@ -27,7 +27,7 @@ static SPI_HandleTypeDef* bleSPI;
 
 // TODO: Check if BLE has been initiated before running any commands
 
-HAL_StatusTypeDef bleInit(SPI_HandleTypeDef* hspi){
+HAL_StatusTypeDef BLE_Init(SPI_HandleTypeDef* hspi){
 
   bleSPI = hspi;
   // Probably should architect this so it's not a hard coded SPI line
@@ -37,16 +37,16 @@ HAL_StatusTypeDef bleInit(SPI_HandleTypeDef* hspi){
   return HAL_OK;
 }
 
-HAL_StatusTypeDef bleWriteUART(char* s, uint8_t len){
+HAL_StatusTypeDef BLE_WriteUART(char* s, uint8_t len){
     // Write a string to bluetooth UART TX
-    return sendMultiSDEP(COMMAND_MSG_TYPE, SDEP_CMDTYPE_BLE_UARTTX, len, (uint8_t*)s);
+    return BLE_SendMultiSDEP(COMMAND_MSG_TYPE, SDEP_CMDTYPE_BLE_UARTTX, len, (uint8_t*)s);
 }
 
-HAL_StatusTypeDef bleSendAT(char* cmd, uint8_t len){
-    return sendSDEP(COMMAND_MSG_TYPE, SDEP_CMDTYPE_AT_WRAPPER, len, (uint8_t*)cmd);
+HAL_StatusTypeDef BLE_SendAT(char* cmd, uint8_t len){
+    return BLE_SendSDEP(COMMAND_MSG_TYPE, SDEP_CMDTYPE_AT_WRAPPER, len, (uint8_t*)cmd);
 }
 
-HAL_StatusTypeDef sendSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload){
+HAL_StatusTypeDef BLE_SendSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload){
 
   HAL_StatusTypeDef ret = HAL_ERROR;
   // Binary AND with 0x7F since MSB of len is reserved for a flag
@@ -86,7 +86,7 @@ HAL_StatusTypeDef sendSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t
   return ret;
 }
 
-HAL_StatusTypeDef sendMultiSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload){
+HAL_StatusTypeDef BLE_SendMultiSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, uint8_t* payload){
   uint8_t packetLen;
   // Make this an int so that it can decrement less than 0
   int8_t bytesLeft = len;
@@ -101,7 +101,7 @@ HAL_StatusTypeDef sendMultiSDEP(uint8_t msgType, uint16_t cmdID, uint8_t len, ui
     // Wait 4ms before sending packet. Not sure why, but it works!
     HAL_Delay(4);
     // payload+(len-bytesLeft) is to pass the pointer incremeted by our current position in the payload
-    ret |= sendSDEP(msgType, cmdID, packetLen, payload+(len-bytesLeft));
+    ret |= BLE_SendSDEP(msgType, cmdID, packetLen, payload+(len-bytesLeft));
     bytesLeft -= MAX_SDEP_PACKET_SIZE;
   }
 
