@@ -10,7 +10,6 @@
 //
 
 /* Includes ------------------------------------------------------------------*/
-#include "adc.h"
 #include "events.h"
 #include "microphone.h"
 #include "state_machine.h"
@@ -80,7 +79,7 @@ void smRun(sm_state_t* state){
     /* Calibration state */
     case stateCal:
 
-      if (ADC_CalibrateVRefInt() == HAL_OK){
+      if (Mic_Calibrate() == HAL_OK){
         *state = stateStandby;
       }
       else{

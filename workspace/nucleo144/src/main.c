@@ -15,6 +15,7 @@
 #include "stm32l4xx.h"
 #include "stm32l4xx_nucleo_144.h"
 #include "main.h"
+#include "microphone.h"
 #include "state_machine.h"
 #include <stdio.h>
 
@@ -90,15 +91,8 @@ int main(void)
   BSP_LED_Init(LED3);
 
 
-  if (ADC_Init() !=  HAL_OK){
+  if (Mic_Init() != true){
     Error_Handler();
-  }
-  if (ADC_InitChannels() != HAL_OK){
-    Error_Handler();
-  }
-  /* Calibrate ADC */
-  if (HAL_ADCEx_Calibration_Start(&adc_h, ADC_SINGLE_ENDED) != HAL_OK){
-      Error_Handler();
   }
 
   // Initialize SPI handler

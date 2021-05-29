@@ -10,7 +10,9 @@
 //
 
 /* Includes ------------------------------------------------------------------*/
+#include "adc.h"
 #include "microphone.h"
+#include "stm32l4xx.h"
 #include "stm32l4xx_nucleo_144.h"
 
 
@@ -26,25 +28,42 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern ADC_HandleTypeDef adc_h;
 /* Contains ADC data from microphone */
 static uint16_t m_AudioBuff[AUDIO_DATA_BUFFER_SIZE];
 
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+bool Mic_Init(void){
+    bool success = true;
 
+    success = (ADC_Init() == HAL_OK);
+
+    if(success == true){
+        success = (ADC_InitChannels() == HAL_OK);
+    }
+
+    if(success == true){
+        success = (ADC_CalibrateVRefInt() == HAL_OK);
+    }
+
+    return success;
+}
+
+HAL_StatusTypeDef Mic_Calibrate(void){
+    return ADC_CalibrateVRefInt();
+}
 
 HAL_StatusTypeDef Mic_StartRecord(void){
     BSP_LED_On(LED2);
-    return HAL_ADC_Start_DMA(&adc_h, (uint32_t*)m_AudioBuff, AUDIO_DATA_BUFFER_SIZE);
+    return ADC_StartDma((uint32_t*)m_AudioBuff, AUDIO_DATA_BUFFER_SIZE);
 
 }
 
 HAL_StatusTypeDef Mic_StopRecord(void){
     /* Clear buffer beforehand maybe */
     BSP_LED_Off(LED2);
-    return HAL_ADC_Stop_DMA(&adc_h);
+    return ADC_StopDma();
 }
 
 /**

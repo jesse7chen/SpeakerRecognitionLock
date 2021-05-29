@@ -9,6 +9,7 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
+#include "adc.h"
 #include "button.h"
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
@@ -23,7 +24,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern ADC_HandleTypeDef             adc_h;
 extern GPIO_InitTypeDef              test_pin;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,7 +65,8 @@ void DMA1_Channel1_IRQHandler(void)
 	//HAL_ADC_IRQHandler(&adc_h);
     /* For debug purposes, toggle this pin */
     // HAL_GPIO_TogglePin(GPIOC, test_pin.Pin);
-	HAL_DMA_IRQHandler(adc_h.DMA_Handle);
+    ADC_HandleTypeDef handle = ADC_GetHandle();
+	HAL_DMA_IRQHandler(handle.DMA_Handle);
 }
 
 /**
