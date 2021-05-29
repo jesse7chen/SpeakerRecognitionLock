@@ -36,15 +36,15 @@ static uint16_t   audio_data[AUDIO_DATA_BUFFER_SIZE];
 
 
 HAL_StatusTypeDef startRecord(void){
-	BSP_LED_On(LED2);
-  return HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE);
+    BSP_LED_On(LED2);
+    return HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE);
 
 }
 
 HAL_StatusTypeDef stopRecord(void){
-  /* Clear buffer beforehand maybe */
-  BSP_LED_Off(LED2);
-  return HAL_ADC_Stop_DMA(&adc_h);
+    /* Clear buffer beforehand maybe */
+    BSP_LED_Off(LED2);
+    return HAL_ADC_Stop_DMA(&adc_h);
 }
 
 /**

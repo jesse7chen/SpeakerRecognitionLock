@@ -9,11 +9,12 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "adc.h"
+#include "bluetooth.h"
+#include "button.h"
 #include "stm32l4xx.h"
 #include "stm32l4xx_nucleo_144.h"
-#include "bluetooth.h"
-#include "adc.h"
+#include "main.h"
 #include "state_machine.h"
 #include <stdio.h>
 
@@ -78,8 +79,7 @@ int main(void)
   /* Configure the System clock to have a frequency of 120 MHz */
   SystemClock_Config();
 
-  /* Configure button as external interrupt generator */
-  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
+  buttonInit();
 
   /* Add your application code here
      */

@@ -374,6 +374,13 @@ uint32_t         BSP_SMPS_Supply_Disable(void);
   */
 #endif /* USE_STM32L4XX_NUCLEO_144_SMPS */
 
+// Interrupt priorities
+#define BUTTON_DEBOUNCE_PRIORITY   6U
+//#define TICK_INT_PRIORITY     0x0FU
+
+// Interrupt subpriorities
+#define BUTTON_DEBOUNCE_SUB_PRIORITY 0U
+
 /**
   * @}
   */

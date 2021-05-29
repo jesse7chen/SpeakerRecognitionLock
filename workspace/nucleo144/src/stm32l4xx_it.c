@@ -9,6 +9,7 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
+#include "button.h"
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
 #ifdef USE_RTOS_SYSTICK
@@ -75,4 +76,22 @@ void DMA1_Channel1_IRQHandler(void)
 void EXTI15_10_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
+}
+
+/**
+  * @brief  Handle EXTI interrupt request.
+  * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == USER_BUTTON_PIN)
+  {
+    buttonDebounceCallback();
+  }
+}
+
+void TIM2_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(getButtonDebounceTmrHandle());
 }

@@ -10,10 +10,11 @@
 //
 
 /* Includes ------------------------------------------------------------------*/
+#include "adc.h"
+#include "events.h"
+#include "microphone.h"
 #include "state_machine.h"
 #include "stm32l4xx_nucleo_144.h"
-#include "adc.h"
-#include "microphone.h"
 
 
 /** @addtogroup Templates
@@ -24,7 +25,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static volatile uint8_t ubUserButtonClickEvent = RESET;  /* Event detection: Set after User Button interrupt */
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -45,24 +45,20 @@ void smRun(sm_state_t* state){
 
     /* Standby state */
     case stateStandby:
-      if (ubUserButtonClickEvent == SET){
-
-        ubUserButtonClickEvent = RESET;
+      if (eventGetAndClear(EVENT_USER_BUTTON_PRESS)){
         if (startRecord() == HAL_OK){
           *state = stateRec;
         }
         else{
           *state = stateErr;
         }
-
       }
       break;
 
     /* Recording state */
     case stateRec:
-    if (ubUserButtonClickEvent == SET){
+    if (eventGetAndClear(EVENT_USER_BUTTON_PRESS)){
 
-      ubUserButtonClickEvent = RESET;
       if (stopRecord() == HAL_OK){
         *state = stateProc;
       }
@@ -75,6 +71,8 @@ void smRun(sm_state_t* state){
 
     /* Processing state */
     case stateProc:
+      // Send data to Wifi module - need to implement a file to interface with ESP
+      // since it can only act as a SPI master
       /* Temporary for now */
       *state = stateStandby;
       break;
@@ -98,14 +96,5 @@ void smRun(sm_state_t* state){
       while (1)
       {
       }
-  }
-}
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  if (GPIO_Pin == USER_BUTTON_PIN)
-  {
-    /* Set variable to report push button event to main program */
-    ubUserButtonClickEvent = SET;
   }
 }
