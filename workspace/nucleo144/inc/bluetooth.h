@@ -41,7 +41,7 @@
 
 #include "stm32l4xx_hal_spi.h"
 // #include "stm32l4xx_hal_def.h"
-#include <stdint.h>
+#include "common.h"
 
 //TODO: Look into making some kind of static SPI_HandleTypeDef for bluetooth, so we don't have to pass in this stuff
 // Perhaps make it part of the init function?

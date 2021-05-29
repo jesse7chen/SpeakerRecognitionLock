@@ -2,7 +2,7 @@
 #define __MICROPHONE_H
 
 #include "stm32l4xx.h"
-#include <stdint.h>
+#include "common.h"
 
 HAL_StatusTypeDef startRecord(void);
 HAL_StatusTypeDef stopRecord(void);

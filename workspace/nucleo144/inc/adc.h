@@ -1,8 +1,8 @@
 #ifndef __ADC_H
 #define __ADC_H
 
+#include "common.h"
 #include "stm32l4xx.h"
-#include <stdint.h>
 
 #define CALIBRATE_MODE ((uint8_t) 0UL)
 #define RECORD_MODE ((uint8_t) 1UL)
