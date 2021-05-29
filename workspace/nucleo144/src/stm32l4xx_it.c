@@ -9,6 +9,8 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
+#include "adc.h"
+#include "button.h"
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
 #ifdef USE_RTOS_SYSTICK
@@ -22,7 +24,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern ADC_HandleTypeDef             adc_h;
 extern GPIO_InitTypeDef              test_pin;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,7 +65,8 @@ void DMA1_Channel1_IRQHandler(void)
 	//HAL_ADC_IRQHandler(&adc_h);
     /* For debug purposes, toggle this pin */
     // HAL_GPIO_TogglePin(GPIOC, test_pin.Pin);
-	HAL_DMA_IRQHandler(adc_h.DMA_Handle);
+    ADC_HandleTypeDef handle = ADC_GetHandle();
+	HAL_DMA_IRQHandler(handle.DMA_Handle);
 }
 
 /**
@@ -75,4 +77,22 @@ void DMA1_Channel1_IRQHandler(void)
 void EXTI15_10_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
+}
+
+/**
+  * @brief  Handle EXTI interrupt request.
+  * @param  GPIO_Pin Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == USER_BUTTON_PIN)
+  {
+    Button_DebounceCallback();
+  }
+}
+
+void TIM2_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(Button_GetDebounceTmrHandle());
 }

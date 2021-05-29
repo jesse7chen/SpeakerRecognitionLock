@@ -2,9 +2,11 @@
 #define __MICROPHONE_H
 
 #include "stm32l4xx.h"
-#include <stdint.h>
+#include "common.h"
 
-HAL_StatusTypeDef startRecord(void);
-HAL_StatusTypeDef stopRecord(void);
+bool Mic_Init(void);
+HAL_StatusTypeDef Mic_Calibrate(void);
+HAL_StatusTypeDef Mic_StartRecord(void);
+HAL_StatusTypeDef Mic_StopRecord(void);
 
 #endif /* __MICROPHONE_H */

@@ -1,14 +1,17 @@
 set( PROJECT_SOURCES
 
-        src/state_machine.c
-        #src/syscalls.c
-        src/stm32l4xx_it.c
         src/adc.c
-        src/main.c
-        src/stm32l4xx_hal_msp.c
-        src/microphone.c
         src/bluetooth.c
+        src/button.c
+        src/events.c
+        src/main.c
+        src/microphone.c
+        src/stm32l4xx_hal_msp.c
+        src/state_machine.c
+        src/stm32l4xx_it.c
+        #src/syscalls.c
         src/system_stm32l4xx.c
+
 
         HAL_Driver/src/stm32l4xx_hal_rcc.c
         HAL_Driver/src/stm32l4xx_ll_rtc.c
@@ -18,7 +21,7 @@ set( PROJECT_SOURCES
         HAL_Driver/src/stm32l4xx_ll_spi.c
         HAL_Driver/src/stm32l4xx_ll_usb.c
         HAL_Driver/src/stm32l4xx_hal_lptim.c
-        HAL_Driver/src/stm32l4xx_hal_timebase_tim_template.c
+        # HAL_Driver/src/stm32l4xx_hal_timebase_tim_template.c
         HAL_Driver/src/stm32l4xx_ll_opamp.c
         HAL_Driver/src/stm32l4xx_hal_nand.c
         HAL_Driver/src/stm32l4xx_ll_fmc.c
@@ -111,14 +114,17 @@ set( PROJECT_SOURCES
 
         Utilities/STM32L4xx_Nucleo_144/stm32l4xx_nucleo_144.c
 
-        inc/main.h
         inc/adc.h
-        inc/stm32l4xx_it.h
-        inc/stm32_assert.h
-        inc/microphone.h
         inc/bluetooth.h
+        inc/button.h
+        inc/common.h
+        inc/events.h
+        inc/main.h
+        inc/microphone.h
         inc/state_machine.h
         inc/stm32l4xx_hal_conf.h
+        inc/stm32l4xx_it.h
+        inc/stm32_assert.h
 
         HAL_Driver/inc/stm32l4xx_ll_pwr.h
         HAL_Driver/inc/stm32l4xx_hal_opamp.h
