@@ -19,6 +19,9 @@ Some other protocols that are common are:
 
 -- HostMachineIP and HostMachineWSPort defined in credentials.lua file
 
+-- Change max string size
+collectgarbage("setmemlimit", 8192)
+
 -- Static variables
 local STM32_HEADER_SIZE_LEN = 12
 local INT_PIN = 1
@@ -79,6 +82,7 @@ function SPI_FetchData()
                 end)
                 ws:connect(HostMachineWSPort)
             else
+                -- Todo: Error handling when connection is closed unexpectedly
                 ws:send(header..data,2)
             end
         end

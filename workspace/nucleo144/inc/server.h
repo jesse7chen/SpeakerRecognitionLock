@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#define MAX_SERVER_PACKET_SIZE 2048
+#define MAX_SERVER_PACKET_SIZE 4096
 
 // TODO: Make use of vRefInt in data, either adjust data here or on
 // server
