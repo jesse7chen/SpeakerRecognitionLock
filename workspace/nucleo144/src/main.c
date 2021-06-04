@@ -12,6 +12,10 @@
 #include "adc.h"
 #include "bluetooth.h"
 #include "button.h"
+#include "error.h"
+#include "ESP8266.h"
+#include "events.h"
+#include "server.h"
 #include "stm32l4xx.h"
 #include "stm32l4xx_nucleo_144.h"
 #include "main.h"
@@ -47,15 +51,6 @@ Might wanna enable BOOSTEN so that sample time is always short?
 static void SystemClock_Config(void);
 
 /* Private functions ---------------------------------------------------------*/
-
-static void Error_Handler(void)
-{
-  /* Turn LED3 on */
-  BSP_LED_On(LED3);
-  while (1)
-  {
-  }
-}
 
 /**
   * @brief  Main program
@@ -137,6 +132,11 @@ int main(void)
 
   BLE_Init(&spi_h);
 
+  if(Server_Init() != true)
+  {
+    Error_Handler();
+  }
+
   /* Init some GPIO test pin on same block as ADC */
   test_pin.Pin = GPIO_PIN_4;
   // Not the same as GPIO_MODE_ANALOG
@@ -148,7 +148,6 @@ int main(void)
   HAL_GPIO_Init(NUCLEO_ADCx_GPIO_PORT, &test_pin);
 
 
-/* */
 /* Start ADC reads */
   // if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
   //     Error_Handler();
@@ -176,7 +175,11 @@ int main(void)
   state = stateStandby;
   while (1)
   {
+    if(Event_GetAndClear(EVENT_AUDIO_TRANSFER_ERROR)){
+        Error_Handler();
+    }
     smRun(&state);
+    Server_Update();
 	// Blink LED1
 // 	BSP_LED_On(LED1);
 // 	BLE_WriteUART(test_string, sizeof(test_string));

@@ -234,6 +234,40 @@ typedef enum
 #define SPIx__CS_LOW()       HAL_GPIO_WritePin(NUCLEO_SPIx_CS_GPIO_PORT, NUCLEO_SPIx_CS_PIN, GPIO_PIN_RESET)
 #define SPIx__CS_HIGH()      HAL_GPIO_WritePin(NUCLEO_SPIx_CS_GPIO_PORT, NUCLEO_SPIx_CS_PIN, GPIO_PIN_SET)
 
+/*########################## ESP8266 SPI######################################*/
+#define ESP8266_SPI3                                    SPI3
+#define ESP8266_SPI3_CLK_ENABLE()                       __HAL_RCC_SPI3_CLK_ENABLE()
+#define ESP8266_SPI3_IRQn                               SPI3_IRQn
+
+#define ESP8266_SPI3_SCK_GPIO_PORT                      GPIOB
+#define ESP8266_SPI3_SCK_PIN                            GPIO_PIN_3
+#define ESP8266_SPI3_SCK_AF                             GPIO_AF6_SPI3
+#define ESP8266_SPI3_SCK_GPIO_CLK_ENABLE()              __HAL_RCC_GPIOB_CLK_ENABLE()
+#define ESP8266_SPI3_SCK_GPIO_CLK_DISABLE()             __HAL_RCC_GPIOB_CLK_DISABLE()
+
+#define ESP8266_SPI3_MISO_GPIO_PORT                     GPIOB
+#define ESP8266_SPI3_MISO_PIN                           GPIO_PIN_4
+#define ESP8266_SPI3_MISO_AF                            GPIO_AF6_SPI3
+#define ESP8266_SPI3_MISO_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOB_CLK_ENABLE()
+#define ESP8266_SPI3_MISO_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOB_CLK_DISABLE()
+
+#define ESP8266_SPI3_MOSI_GPIO_PORT                     GPIOB
+#define ESP8266_SPI3_MOSI_PIN                           GPIO_PIN_5
+#define ESP8266_SPI3_MOSI_AF                            GPIO_AF6_SPI3
+#define ESP8266_SPI3_MOSI_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOB_CLK_ENABLE()
+#define ESP8266_SPI3_MOSI_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOB_CLK_DISABLE()
+
+#define ESP8266_SPI3_CS_GPIO_PORT                       GPIOA
+#define ESP8266_SPI3_CS_PIN                             GPIO_PIN_4
+#define ESP8266_SPI3_CS_AF                              GPIO_AF6_SPI3
+#define ESP8266_SPI3_CS_GPIO_CLK_ENABLE()               __HAL_RCC_GPIOA_CLK_ENABLE()
+#define ESP8266_SPI3_CS_GPIO_CLK_DISABLE()              __HAL_RCC_GPIOA_CLK_DISABLE()
+
+#define ESP8266_INT_GPIO_PORT                           GPIOG
+#define ESP8266_INT_PIN                                 GPIO_PIN_1
+#define ESP8266_INT_GPIO_CLK_ENABLE()                   __HAL_RCC_GPIOG_CLK_ENABLE()
+#define ESP8266_INT_GPIO_CLK_DISABLE()                  __HAL_RCC_GPIOG_CLK_DISABLE()
+
 /**
   * @brief  SD Control Lines management
   */
@@ -277,7 +311,7 @@ typedef enum
 /*################################ ADC1 ######################################*/
 /**
   * @brief  ADC Interface pins
-  *         used to detect motion of Joystick available on Adafruit 1.8" TFT shield
+  *         Used to read analog data from microphone
   */
 
 #ifdef HAL_ADC_MODULE_ENABLED
@@ -285,8 +319,9 @@ typedef enum
 #define NUCLEO_ADCx                               ADC1
 
 #define NUCLEO_ADCx_CHANNEL                       ADC_CHANNEL_2
-/* Sampling every 24.5 ADC cycles with /2 divisor = ~50 kHz sampling rate */
-#define NUCLEO_ADCx_SAMPLETIME                    ADC_SAMPLETIME_24CYCLES_5
+/* Sampling every 640.5 ADC cycles with /4 divisor = 45.94185 kHz sampling rate */
+// 120 MHz/4 = 30 MHz/(640.5 cycles sampling +12.5 cycles conversion) = 45.94185 kHz
+#define NUCLEO_ADCx_SAMPLETIME                    ADC_SAMPLETIME_640CYCLES_5
 #define NUCLEO_ADCx_CLK_ENABLE()                  __HAL_RCC_ADC_CLK_ENABLE()
 #define NUCLEO_ADCx_CLK_DISABLE()                 __HAL_RCC_ADC_CLK_DISABLE()
 
@@ -295,6 +330,8 @@ typedef enum
 #define NUCLEO_ADCx_GPIO_PIN                        GPIO_PIN_1
 #define NUCLEO_ADCx_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOC_CLK_ENABLE()
 #define NUCLEO_ADCx_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOC_CLK_DISABLE()
+
+#define NUCELO_ADC_DMA_INSTANCE                   DMA1_Channel1
 
 #endif /* HAL_ADC_MODULE_ENABLED */
 
@@ -318,6 +355,10 @@ typedef enum
 #endif                          /* ADP5301ACBZ */
 
 #endif /* USE_STM32L4XX_NUCLEO_144_SMPS */
+
+/*################################ Audio Buffer DMA ######################################*/
+#define AUDIO_BUFF_DMA_INSTANCE  DMA2_Channel1
+#define AUDIO_BUFF_DMA_IRQn      DMA2_Channel1_IRQn
 
 /**
   * @}
@@ -374,12 +415,16 @@ uint32_t         BSP_SMPS_Supply_Disable(void);
   */
 #endif /* USE_STM32L4XX_NUCLEO_144_SMPS */
 
-// Interrupt priorities
+// Interrupt priorities - lower number = higher priority
+#define ADC_DMA_PRIORITY           3U
+#define AUDIO_BUFF_DMA_PRIORITY    4U
+#define ESP8266_SPI3_PRIORITY      5U
 #define BUTTON_DEBOUNCE_PRIORITY   6U
 //#define TICK_INT_PRIORITY     0x0FU
 
 // Interrupt subpriorities
-#define BUTTON_DEBOUNCE_SUB_PRIORITY 0U
+#define ESP8266_SPI3_SUBPRIORITY    0U
+#define BUTTON_DEBOUNCE_SUBPRIORITY 0U
 
 /**
   * @}

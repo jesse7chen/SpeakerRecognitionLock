@@ -10,8 +10,10 @@
 //
 
 /* Includes ------------------------------------------------------------------*/
+#include "ESP8266.h"
 #include "events.h"
 #include "microphone.h"
+#include "server.h"
 #include "state_machine.h"
 #include "stm32l4xx_nucleo_144.h"
 
@@ -34,6 +36,8 @@ HAL_StatusTypeDef smInit(sm_state_t* state){
 }
 
 void smRun(sm_state_t* state){
+  uint32_t size = 0;
+  uint16_t* audioData;
 
   switch(*state){
 
@@ -56,25 +60,35 @@ void smRun(sm_state_t* state){
 
     /* Recording state */
     case stateRec:
-    if (Event_GetAndClear(EVENT_USER_BUTTON_PRESS)){
+        if (Event_GetAndClear(EVENT_USER_BUTTON_PRESS)){
+            if (Mic_StopRecord() == HAL_OK){
+                audioData = Mic_GetAudioData(&size);
+                // audioData = Mic_GetTestData(&size);
+                // Start data transfer
+                if(Server_StartAudioTx(size, (uint8_t*)audioData) == false){
+                    *state = stateErr;
+                }
+                *state = stateProc;
+            }
+            else{
+                *state = stateErr;
+            }
+        }
+        if(Event_GetAndClear(EVENT_AUDIO_RECORD_DONE)){
+            BSP_LED_Off(LED2);
+        }
 
-      if (Mic_StopRecord() == HAL_OK){
-        *state = stateProc;
-      }
-      else{
-        *state = stateErr;
-      }
-
-    }
-      break;
+        break;
 
     /* Processing state */
     case stateProc:
-      // Send data to Wifi module - need to implement a file to interface with ESP
-      // since it can only act as a SPI master
-      /* Temporary for now */
-      *state = stateStandby;
-      break;
+        // Check if processing done
+        if(Event_GetAndClear(EVENT_AUDIO_TRANSFER_DONE)){
+            // Consume any events that may have been generated but not used
+            Event_Clear(EVENT_USER_BUTTON_PRESS);
+            *state = stateStandby;
+        }
+        break;
 
     /* Calibration state */
     case stateCal:

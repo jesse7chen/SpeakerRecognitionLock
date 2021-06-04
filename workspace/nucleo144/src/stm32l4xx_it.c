@@ -11,6 +11,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "adc.h"
 #include "button.h"
+#include "ESP8266.h"
+#include "microphone.h"
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
 #ifdef USE_RTOS_SYSTICK
@@ -25,6 +27,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern GPIO_InitTypeDef              test_pin;
+static uint32_t m_ErrorCount = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -59,14 +62,22 @@ void SysTick_Handler(void)
 * @param  None
 * @retval None
 */
+
+
+
+// DMA1 Channel 1 is Microphone ADC to Memory stream
 void DMA1_Channel1_IRQHandler(void)
 {
-	/* TODO: See if the following line of code is necessary or not? Says to do in the documentation but example code doesn't have it */
-	//HAL_ADC_IRQHandler(&adc_h);
-    /* For debug purposes, toggle this pin */
-    // HAL_GPIO_TogglePin(GPIOC, test_pin.Pin);
-    ADC_HandleTypeDef handle = ADC_GetHandle();
-	HAL_DMA_IRQHandler(handle.DMA_Handle);
+    // Currently this ADC IRQHandler doesn't seem to be necessary, but will
+    // leave it in case it has functionality which is needed
+    HAL_ADC_IRQHandler(ADC_GetHandle());
+	HAL_DMA_IRQHandler(ADC_GetHandle()->DMA_Handle);
+}
+
+// DMA2 Channel 1 is for ping pong buffers to main audio buffer
+void DMA2_Channel1_IRQHandler(void)
+{
+	HAL_DMA_IRQHandler(Mic_GetAudioBuffDmaHandle());
 }
 
 /**
@@ -95,4 +106,38 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 void TIM2_IRQHandler(void)
 {
     HAL_TIM_IRQHandler(Button_GetDebounceTmrHandle());
+}
+
+void SPI3_IRQHandler(void)
+{
+    HAL_SPI_IRQHandler(ESP8266_GetSpiHandle());
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi->Instance == ESP8266_SPI3){
+        ESP8266_SpiTxCpltCallback(hspi);
+    }
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi->Instance == ESP8266_SPI3){
+    }
+}
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi->Instance == ESP8266_SPI3){
+    }
+}
+
+// Todo: Implement specific error handling for SPI errors
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi){
+    if(hspi->Instance == ESP8266_SPI3){
+        m_ErrorCount++;
+    }
+}
+
+void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi){
+    if(hspi->Instance == ESP8266_SPI3){
+        m_ErrorCount++;
+    }
 }

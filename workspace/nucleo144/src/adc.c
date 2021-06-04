@@ -11,6 +11,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "adc.h"
+#include "error.h"
+#include "microphone.h"
 #include "stm32l4xx_nucleo_144.h"
 
 
@@ -40,14 +42,19 @@
 static ADC_HandleTypeDef m_AdcHandler;
 /* Fast channels are: PC0, PC1, PC2, PC3, PA0. */
 static ADC_ChannelConfTypeDef m_AdcChanConfig;
+static DMA_HandleTypeDef m_AdcDmaHandle;
+
 static uint16_t m_CalData[CAL_DATA_SIZE];
 
 /* Not sure if I should make this a float or not considering the computation resources that may cost */
 static uint16_t m_VrefInt = 0;
 static volatile uint8_t m_VrefDone = RESET;
+static uint32_t m_AdcStartTicks = 0;
+static uint32_t m_TimeTaken = 0;
+static ADC_MODE_T m_CurrMode = ADC_MODE_CALIBRATE;
 
 /* Private Functions----------------------------------------------------------*/
-static HAL_StatusTypeDef ChangeADCMode(uint8_t mode);
+static HAL_StatusTypeDef ChangeADCMode(ADC_MODE_T mode);
 
 HAL_StatusTypeDef ADC_Init(void){
   // Initialize ADC handler
@@ -56,8 +63,7 @@ HAL_StatusTypeDef ADC_Init(void){
     // Assert that we de-init HAL_ADC correctly
     assert_param(HAL_ADC_DeInit(&m_AdcHandler) == HAL_OK);
 
-    m_AdcHandler.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2; /* We choose a synchronous clock in msp_init and we choose /2 because
-    that's the fastest we can do unless system clock is already prescaled by 2*/
+    m_AdcHandler.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4; /* We choose a synchronous clock in msp_init and we choose /4*/
     m_AdcHandler.Init.Resolution = ADC_RESOLUTION_12B; // Highest possible resolution
     /* The register that holds our conversion results is 16 bits wide (ADC_DR)
      * Right justified means that MSBs are set to zero (bits 15-12)
@@ -134,15 +140,12 @@ HAL_StatusTypeDef ADC_InitChannels(void){
 }
 
 HAL_StatusTypeDef ADC_StartDma(uint32_t *buff, uint32_t len){
+    m_AdcStartTicks = HAL_GetTick();
     return HAL_ADC_Start_DMA(&m_AdcHandler, buff, len);
 }
 
 HAL_StatusTypeDef ADC_StopDma(void){
     return HAL_ADC_Stop_DMA(&m_AdcHandler);
-}
-
-ADC_HandleTypeDef ADC_GetHandle(void){
-    return m_AdcHandler;
 }
 
 HAL_StatusTypeDef ADC_CalibrateVRefInt(void){
@@ -165,7 +168,7 @@ HAL_StatusTypeDef ADC_CalibrateVRefInt(void){
   // m_AdcChanConfig.Rank = ADC_REGULAR_RANK_2;
   // assert_param(HAL_ADC_ConfigChannel(&m_AdcHandler, &m_AdcChanConfig) == HAL_OK);
 
-  assert_param(ChangeADCMode(CALIBRATE_MODE) == HAL_OK);
+  assert_param(ChangeADCMode(ADC_MODE_CALIBRATE) == HAL_OK);
 
   m_VrefDone = RESET;
 
@@ -202,27 +205,44 @@ HAL_StatusTypeDef ADC_CalibrateVRefInt(void){
   m_VrefInt = COMPUTE_VREF_INT(vref_sum/CAL_DATA_SIZE);
 
   /* Change back to record mode when done, to microphone module it should seem like nothing has changed */
-  assert_param(ChangeADCMode(RECORD_MODE) == HAL_OK);
+  assert_param(ChangeADCMode(ADC_MODE_RECORD) == HAL_OK);
   return HAL_OK;
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *AdcHandle)
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-  /* Report to main program that DMA has filled array */
-  m_VrefDone = SET;
+    m_TimeTaken = HAL_GetTick() - m_AdcStartTicks;
+
+    if(m_CurrMode == ADC_MODE_CALIBRATE){
+        /* Report to main program that DMA has filled array */
+        m_VrefDone = SET;
+    }
+    else if(m_CurrMode == ADC_MODE_RECORD){
+        Mic_ConvCompleteCallback(hadc);
+    }
+}
+
+// Todo: Implement more specialized error handling here
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
+    Error_Handler();
 }
 
 /* This is expected to be called after ADC init */
-static HAL_StatusTypeDef ChangeADCMode(uint8_t mode){
+static HAL_StatusTypeDef ChangeADCMode(ADC_MODE_T mode){
   HAL_StatusTypeDef retVal = HAL_OK;
 
+  if(mode < ADC_MODE_MIN || mode >= ADC_MODE_MAX){
+      Error_Handler();
+  }
+
+  m_CurrMode = mode;
 
   /* Assert that ADC is disabled */
   assert_param((ADC_IS_ENABLE(&m_AdcHandler)) == RESET);
   // Assert that we de-init HAL_ADC correctly
   assert_param(HAL_ADC_DeInit(&m_AdcHandler) == HAL_OK);
 
-  if (mode == RECORD_MODE){
+  if (mode == ADC_MODE_RECORD){
     /* Change relevant ADC parameters */
     m_AdcHandler.Init.ScanConvMode = DISABLE;
     m_AdcHandler.Init.NbrOfConversion = 1;
@@ -235,6 +255,7 @@ static HAL_StatusTypeDef ChangeADCMode(uint8_t mode){
     m_AdcChanConfig.SamplingTime = NUCLEO_ADCx_SAMPLETIME;
     retVal |= HAL_ADC_ConfigChannel(&m_AdcHandler, &m_AdcChanConfig);
 
+    // VrefInt has min sampling time of 4 us
     m_AdcChanConfig.Channel = ADC_CHANNEL_VREFINT;
     m_AdcChanConfig.Rank = ADC_REGULAR_RANK_2;
     m_AdcChanConfig.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
@@ -247,7 +268,7 @@ static HAL_StatusTypeDef ChangeADCMode(uint8_t mode){
     retVal |= HAL_ADCEx_Calibration_Start(&m_AdcHandler, ADC_SINGLE_ENDED);
 
   }
-  else if (mode == CALIBRATE_MODE){
+  else if (mode == ADC_MODE_CALIBRATE){
     /* Change relevant ADC parameters */
     m_AdcHandler.Init.ScanConvMode = ENABLE;
     m_AdcHandler.Init.NbrOfConversion = 2;
@@ -277,5 +298,12 @@ static HAL_StatusTypeDef ChangeADCMode(uint8_t mode){
   }
 
   return retVal;
+}
 
+ADC_HandleTypeDef* ADC_GetHandle(void){
+    return &m_AdcHandler;
+}
+
+DMA_HandleTypeDef* ADC_GetDmaHandle(void){
+    return &m_AdcDmaHandle;
 }
