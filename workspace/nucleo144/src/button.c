@@ -93,7 +93,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
         __HAL_RCC_TIM2_CLK_ENABLE();
 
         // Set TIM2 interrupt priority
-        HAL_NVIC_SetPriority(TIM2_IRQn, BUTTON_DEBOUNCE_PRIORITY, BUTTON_DEBOUNCE_SUB_PRIORITY);
+        HAL_NVIC_SetPriority(TIM2_IRQn, BUTTON_DEBOUNCE_PRIORITY, BUTTON_DEBOUNCE_SUBPRIORITY);
 
         // Enable TIM2 interrupt
         HAL_NVIC_EnableIRQ(TIM2_IRQn);

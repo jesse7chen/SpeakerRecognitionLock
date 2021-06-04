@@ -3,9 +3,12 @@ set( PROJECT_SOURCES
         src/adc.c
         src/bluetooth.c
         src/button.c
+        src/error.c
+        src/ESP8266.c
         src/events.c
         src/main.c
         src/microphone.c
+        src/server.c
         src/stm32l4xx_hal_msp.c
         src/state_machine.c
         src/stm32l4xx_it.c
@@ -118,9 +121,12 @@ set( PROJECT_SOURCES
         inc/bluetooth.h
         inc/button.h
         inc/common.h
+        inc/error.h
+        inc/ESP8266.h
         inc/events.h
         inc/main.h
         inc/microphone.h
+        inc/server.h
         inc/state_machine.h
         inc/stm32l4xx_hal_conf.h
         inc/stm32l4xx_it.h
