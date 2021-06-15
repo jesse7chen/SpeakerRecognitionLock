@@ -13,6 +13,7 @@
 #include "button.h"
 #include "ESP8266.h"
 #include "microphone.h"
+#include "SPH0645.h"
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx.h"
 #ifdef USE_RTOS_SYSTICK
@@ -43,10 +44,10 @@ static uint32_t m_ErrorCount = 0;
   */
 void SysTick_Handler(void)
 {
-	HAL_IncTick();
-	HAL_SYSTICK_IRQHandler();
+    HAL_IncTick();
+    HAL_SYSTICK_IRQHandler();
 #ifdef USE_RTOS_SYSTICK
-	osSystickHandler();
+    osSystickHandler();
 #endif
 }
 
@@ -74,10 +75,30 @@ void DMA1_Channel1_IRQHandler(void)
 	HAL_DMA_IRQHandler(ADC_GetHandle()->DMA_Handle);
 }
 
+
+// DMA1 Channel 2 is SAI Rx interface to SPH0645 microphone
+void DMA1_Channel2_IRQHandler(void)
+{
+    HAL_DMA_IRQHandler(SPH0645_GetDMAHandle());
+}
+
+// SPH0645 is only user of SAI1 at the moment
+void SAI1_IRQHandler(void)
+{
+    HAL_SAI_IRQHandler(SPH0645_GetSAIHandle());
+}
+
 // DMA2 Channel 1 is for ping pong buffers to main audio buffer
 void DMA2_Channel1_IRQHandler(void)
 {
-	HAL_DMA_IRQHandler(Mic_GetAudioBuffDmaHandle());
+    HAL_DMA_IRQHandler(Mic_GetAudioBuffDmaHandle());
+}
+
+void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
+{
+    if(hsai->Instance == SPH0645_SAI) {
+        SPH0645_SAIRxCpltCallback(hsai);
+    }
 }
 
 /**

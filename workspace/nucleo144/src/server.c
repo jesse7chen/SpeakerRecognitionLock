@@ -53,7 +53,7 @@ void Server_Update(void){
 
             // May not need to send a full payload if last packet
             if(m_TxPacket.header.packetNum >= m_TxPacket.header.totalPackets){
-                payloadSize = MAX_SERVER_PACKET_SIZE;
+                payloadSize = m_TxBuffer.size - buffIdx;
             }
             else{
                 payloadSize = MAX_SERVER_PACKET_SIZE;

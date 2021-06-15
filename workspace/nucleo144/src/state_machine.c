@@ -37,7 +37,7 @@ HAL_StatusTypeDef smInit(sm_state_t* state){
 
 void smRun(sm_state_t* state){
   uint32_t size = 0;
-  uint16_t* audioData;
+  AUDIO_SIZE_T* audioData;
 
   switch(*state){
 

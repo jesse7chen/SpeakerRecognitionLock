@@ -106,7 +106,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc){
     adc_dma->Init.MemDataAlignment    = DMA_MDATAALIGN_HALFWORD;
     // Circular mode is available to handle circular buffers and continuous data flows (such as ADC scan mode)
     adc_dma->Init.Mode = DMA_NORMAL;
-    adc_dma->Init.Priority = DMA_PRIORITY_MEDIUM;
+    adc_dma->Init.Priority = NUCLEO_ADC_DMA_CHANNEL_PRIORITY;
     // De-init before init
     HAL_DMA_DeInit(adc_dma);
     HAL_DMA_Init(adc_dma);
@@ -225,6 +225,41 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi){
         HAL_NVIC_SetPriority(ESP8266_SPI3_IRQn, ESP8266_SPI3_PRIORITY, ESP8266_SPI3_SUBPRIORITY);
         HAL_NVIC_EnableIRQ(ESP8266_SPI3_IRQn);
     }
+}
+
+void HAL_SAI_MspInit(SAI_HandleTypeDef *hsai) {
+    GPIO_InitTypeDef gpio_init;
+
+    if(hsai->Instance == SPH0645_SAI) {
+        // Init SAI pins
+        SPH0645_SAI_SCK_GPIO_CLK_ENABLE();
+        gpio_init.Pin = SPH0645_SAI_SCK_PIN;
+        gpio_init.Mode = GPIO_MODE_AF_PP;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_HIGH;
+        gpio_init.Alternate = SPH0645_SAI_SCK_AF;
+        HAL_GPIO_Init(SPH0645_SAI_SCK_GPIO_PORT, &gpio_init);
+
+// From SPH0645 datasheet
+// When operating a single microphone on an I2S bus, a pull down resistor (100K Ohms)
+// should be placed from the Data pin to ground to insure the bus capacitance is discharged.
+        SPH0645_SAI_SD_GPIO_CLK_ENABLE();
+        gpio_init.Pin = SPH0645_SAI_SD_PIN;
+        gpio_init.Mode = GPIO_MODE_AF_PP;
+        gpio_init.Pull = GPIO_PULLDOWN;
+        gpio_init.Speed = GPIO_SPEED_HIGH;
+        gpio_init.Alternate = SPH0645_SAI_SD_AF;
+        HAL_GPIO_Init(SPH0645_SAI_SD_GPIO_PORT, &gpio_init);
+
+        SPH0645_SAI_FS_GPIO_CLK_ENABLE();
+        gpio_init.Pin = SPH0645_SAI_FS_PIN;
+        gpio_init.Mode = GPIO_MODE_AF_PP;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_HIGH;
+        gpio_init.Alternate = SPH0645_SAI_FS_AF;
+        HAL_GPIO_Init(SPH0645_SAI_FS_GPIO_PORT, &gpio_init);
+    }
+
 }
 
 /**

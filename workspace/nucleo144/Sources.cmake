@@ -9,6 +9,7 @@ set( PROJECT_SOURCES
         src/main.c
         src/microphone.c
         src/server.c
+        src/SPH0645.c
         src/stm32l4xx_hal_msp.c
         src/state_machine.c
         src/stm32l4xx_it.c
@@ -127,6 +128,7 @@ set( PROJECT_SOURCES
         inc/main.h
         inc/microphone.h
         inc/server.h
+        inc/SPH0645.h
         inc/state_machine.h
         inc/stm32l4xx_hal_conf.h
         inc/stm32l4xx_it.h

@@ -218,7 +218,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         m_VrefDone = SET;
     }
     else if(m_CurrMode == ADC_MODE_RECORD){
-        Mic_ConvCompleteCallback(hadc);
+        Mic_RxCompleteCallback();
     }
 }
 

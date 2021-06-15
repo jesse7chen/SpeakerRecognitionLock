@@ -332,6 +332,7 @@ typedef enum
 #define NUCLEO_ADCx_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOC_CLK_DISABLE()
 
 #define NUCELO_ADC_DMA_INSTANCE                   DMA1_Channel1
+#define NUCLEO_ADC_DMA_CHANNEL_PRIORITY           DMA_PRIORITY_MEDIUM
 
 #endif /* HAL_ADC_MODULE_ENABLED */
 
@@ -356,9 +357,37 @@ typedef enum
 
 #endif /* USE_STM32L4XX_NUCLEO_144_SMPS */
 
-/*################################ Audio Buffer DMA ######################################*/
+/*################################ Audio Buffer DMA ##########################*/
 #define AUDIO_BUFF_DMA_INSTANCE  DMA2_Channel1
 #define AUDIO_BUFF_DMA_IRQn      DMA2_Channel1_IRQn
+
+
+/*######################### SPH0645 MEMS Microphone ##########################*/
+#define SPH0645_SAI                                     SAI1_Block_A
+#define SPH0645_SAI_CLK_ENABLE()                        __HAL_RCC_SAI1_CLK_ENABLE()
+#define SPH0645_SAI_IRQn                                SAI1_IRQn
+
+#define SPH0645_SAI_SCK_GPIO_PORT                       GPIOE
+#define SPH0645_SAI_SCK_PIN                             GPIO_PIN_5
+#define SPH0645_SAI_SCK_AF                              GPIO_AF13_SAI1
+#define SPH0645_SAI_SCK_GPIO_CLK_ENABLE()               __HAL_RCC_GPIOE_CLK_ENABLE()
+#define SPH0645_SAI_SCK_GPIO_CLK_DISABLE()              __HAL_RCC_GPIOE_CLK_DISABLE()
+
+#define SPH0645_SAI_SD_GPIO_PORT                       GPIOE
+#define SPH0645_SAI_SD_PIN                             GPIO_PIN_6
+#define SPH0645_SAI_SD_AF                              GPIO_AF13_SAI1
+#define SPH0645_SAI_SD_GPIO_CLK_ENABLE()               __HAL_RCC_GPIOE_CLK_ENABLE()
+#define SPH0645_SAI_SD_GPIO_CLK_DISABLE()              __HAL_RCC_GPIOE_CLK_DISABLE()
+
+#define SPH0645_SAI_FS_GPIO_PORT                       GPIOE
+#define SPH0645_SAI_FS_PIN                             GPIO_PIN_4
+#define SPH0645_SAI_FS_AF                              GPIO_AF13_SAI1
+#define SPH0645_SAI_FS_GPIO_CLK_ENABLE()               __HAL_RCC_GPIOE_CLK_ENABLE()
+#define SPH0645_SAI_FS_GPIO_CLK_DISABLE()              __HAL_RCC_GPIOE_CLK_DISABLE()
+
+#define SPH0645_DMA_INSTANCE                           DMA1_Channel2
+#define SPH0645_DMA_CHANNEL_PRIORITY                   DMA_PRIORITY_VERY_HIGH
+#define SPH0645_DMA_IRQn                               DMA1_Channel2_IRQn
 
 /**
   * @}
@@ -416,15 +445,20 @@ uint32_t         BSP_SMPS_Supply_Disable(void);
 #endif /* USE_STM32L4XX_NUCLEO_144_SMPS */
 
 // Interrupt priorities - lower number = higher priority
-#define ADC_DMA_PRIORITY           3U
-#define AUDIO_BUFF_DMA_PRIORITY    4U
-#define ESP8266_SPI3_PRIORITY      5U
-#define BUTTON_DEBOUNCE_PRIORITY   6U
-//#define TICK_INT_PRIORITY     0x0FU
+#define SPH0645_SAI_PRIORITY            2U
+#define SPH0645_DMA_PRIORITY            3U
+#define ADC_DMA_PRIORITY                4U
+#define AUDIO_BUFF_DMA_PRIORITY         5U
+#define ESP8266_SPI3_PRIORITY           6U
+#define BUTTON_DEBOUNCE_PRIORITY        7U
+//#define TICK_INT_PRIORITY             0x0FU
 
 // Interrupt subpriorities
-#define ESP8266_SPI3_SUBPRIORITY    0U
-#define BUTTON_DEBOUNCE_SUBPRIORITY 0U
+#define SPH0645_SAI_SUBPRIORITY         0U
+#define SPH0645_DMA_SUBPRIORITY         0U
+#define ESP8266_SPI3_SUBPRIORITY        0U
+#define BUTTON_DEBOUNCE_SUBPRIORITY     0U
+
 
 /**
   * @}

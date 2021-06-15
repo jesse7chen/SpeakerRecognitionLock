@@ -1,4 +1,3 @@
-# Todo: Add git python to requirements.txt
 from git import Repo
 import socket
 import os.path as path
