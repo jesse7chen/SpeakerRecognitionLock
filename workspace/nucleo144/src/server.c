@@ -11,6 +11,7 @@
 #include "ESP8266.h"
 #include "error.h"
 #include "events.h"
+#include "fsm_evt_queue.h"
 #include <limits.h>
 #include "microphone.h"
 #include "server.h"
@@ -64,7 +65,7 @@ void Server_Update(void){
                 Error_Handler();
             }
 
-            if(Server_TransmitPacket(SERVER_PAYLOAD_CMD, payloadSize, m_TxPacket.header.packetNum,
+            if(Server_TransmitPacket(m_TxPacket.header.cmd , payloadSize, m_TxPacket.header.packetNum,
                                      &m_TxBuffer.buffer[buffIdx]) == false){
                 Event_Set(EVENT_AUDIO_TRANSFER_ERROR);
             }
@@ -74,12 +75,20 @@ void Server_Update(void){
             memset(&m_TxPacket, 0, sizeof(m_TxPacket));
             m_TxBuffer.buffer = NULL;
             m_TxBuffer.size = 0;
-            Event_Set(EVENT_AUDIO_TRANSFER_DONE);
+
+            // Notify state machine that audio is finished transferring
+            FSM_EVT_T event = {
+                .id = FSM_EVT_AUDIO_TRANSFER_DONE,
+                .size = 0,
+                .data = NULL
+            };
+
+            FSM_EVT_QUEUE_Push(event);
         }
     }
 }
 
-bool Server_StartAudioTx(uint32_t transferSize, uint8_t* txData){
+bool Server_StartAudioTx(SERVER_CMD_T cmd, uint32_t transferSize, uint8_t* txData){
     if(txData == NULL || transferSize > MAX_TRANSFER_SIZE){
         return false;
     }
@@ -90,21 +99,29 @@ bool Server_StartAudioTx(uint32_t transferSize, uint8_t* txData){
 
     // Calculate number of packets necessary
     uint16_t totalPackets = ( transferSize/MAX_SERVER_PACKET_SIZE );
+
     if(transferSize % MAX_SERVER_PACKET_SIZE != 0){
         totalPackets++;
     }
 
+    m_TxPacket.header.cmd = cmd;
     m_TxPacket.header.totalPackets = totalPackets;
-    // Calculate payload size, for now default to the max size
-    uint32_t payloadSize = MAX_SERVER_PACKET_SIZE;
+    // Calculate payload size
+    uint32_t payloadSize = (transferSize >= MAX_SERVER_PACKET_SIZE)
+                            ? MAX_SERVER_PACKET_SIZE : transferSize;
 
-    return Server_TransmitPacket(SERVER_PAYLOAD_CMD, payloadSize, 1, m_TxBuffer.buffer);
+
+    return Server_TransmitPacket(cmd, payloadSize, 1, m_TxBuffer.buffer);
 }
 
-bool Server_TransmitPacket(uint16_t cmd, uint32_t payloadSize, uint16_t packetNum, uint8_t* txData){
+bool Server_TransmitPacket(SERVER_CMD_T cmd, uint32_t payloadSize, uint16_t packetNum, uint8_t* txData){
     // Check for NULL pointer or oversized payload
     if(txData == NULL || payloadSize > sizeof(m_TxPacket.buffer))
     {
+        return false;
+    }
+    // Range check command
+    if(cmd < SERVER_MIN_CMD || cmd >= SERVER_MAX_CMD) {
         return false;
     }
 

@@ -162,3 +162,21 @@ void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi){
         m_ErrorCount++;
     }
 }
+
+void HardFault_Handler(void) {
+    BSP_LED_On(LED3);
+    while(1) {
+    }
+}
+
+void UsageFault_Handler(void) {
+    BSP_LED_On(LED3);
+    while(1) {
+    }
+}
+
+void BusFault_Handler(void) {
+    BSP_LED_On(LED3);
+    while(1) {
+    }
+}

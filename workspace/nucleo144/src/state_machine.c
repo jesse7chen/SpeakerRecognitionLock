@@ -10,8 +10,11 @@
 //
 
 /* Includes ------------------------------------------------------------------*/
+#include "ErrorState.h"
 #include "ESP8266.h"
 #include "events.h"
+#include "fsm_evt_queue.h"
+#include "InitState.h"
 #include "microphone.h"
 #include "server.h"
 #include "state_machine.h"
@@ -26,88 +29,34 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
+static Fsm m_StateMachine;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
-HAL_StatusTypeDef smInit(sm_state_t* state){
-  /* Might want to do something with this eventually */
+HAL_StatusTypeDef StateMachine_Init(void){
+  FsmCtor_(&m_StateMachine, &InitState);
+  FsmInit(&m_StateMachine, 0);
   return HAL_OK;
 }
 
-void smRun(sm_state_t* state){
-  uint32_t size = 0;
-  AUDIO_SIZE_T* audioData;
+void StateMachine_Run(void) {
+    // Check if there are events to service
+    while(FSM_EVT_QUEUE_IsEmpty() == false) {
+        // Grab data from queue
+        FSM_EVT_T event;
 
-  switch(*state){
-
-    /* Reset state */
-    case stateReset:
-      *state = stateStandby;
-      break;
-
-    /* Standby state */
-    case stateStandby:
-      if (Event_GetAndClear(EVENT_USER_BUTTON_PRESS)){
-        if (Mic_StartRecord() == HAL_OK){
-          *state = stateRec;
-        }
-        else{
-          *state = stateErr;
-        }
-      }
-      break;
-
-    /* Recording state */
-    case stateRec:
-        if (Event_GetAndClear(EVENT_USER_BUTTON_PRESS)){
-            if (Mic_StopRecord() == HAL_OK){
-                audioData = Mic_GetAudioData(&size);
-                // audioData = Mic_GetTestData(&size);
-                // Start data transfer
-                if(Server_StartAudioTx(size, (uint8_t*)audioData) == false){
-                    *state = stateErr;
+        if(FSM_EVT_QUEUE_Pop(&event) == true) {
+            // Check if event is not handled - my attempt at implementing
+            // "Programming by difference"
+            if(FsmDispatch(&m_StateMachine, &event) == false) {
+                switch(event.id) {
+                    case FSM_EVT_ERROR:
+                        FsmTran_(&m_StateMachine, &ErrorState);
+                        break;
+                    default:
+                        break;
                 }
-                *state = stateProc;
-            }
-            else{
-                *state = stateErr;
             }
         }
-        if(Event_GetAndClear(EVENT_AUDIO_RECORD_DONE)){
-            BSP_LED_Off(LED2);
-        }
-
-        break;
-
-    /* Processing state */
-    case stateProc:
-        // Check if processing done
-        if(Event_GetAndClear(EVENT_AUDIO_TRANSFER_DONE)){
-            // Consume any events that may have been generated but not used
-            Event_Clear(EVENT_USER_BUTTON_PRESS);
-            *state = stateStandby;
-        }
-        break;
-
-    /* Calibration state */
-    case stateCal:
-
-      if (Mic_Calibrate() == HAL_OK){
-        *state = stateStandby;
-      }
-      else{
-        /* If calibration doesn't succeed, go to error state */
-        *state = stateErr;
-      }
-      break;
-
-    /* Error state */
-    case stateErr:
-      /* Turn LED3 on - this should have initialized already */
-      BSP_LED_On(LED3);
-      while (1)
-      {
-      }
-  }
+    }
 }

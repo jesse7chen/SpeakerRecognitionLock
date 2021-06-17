@@ -35,6 +35,8 @@ typedef enum SERVER_CMD_T
 {
     SERVER_MIN_CMD = 0,
     SERVER_HEADER_CMD = SERVER_MIN_CMD,
+    SERVER_START_TRAIN_CMD,
+    SERVER_TRAIN_CMD,
     SERVER_PAYLOAD_CMD,
     SERVER_TEST_CMD,
     SERVER_MAX_CMD
@@ -43,8 +45,8 @@ typedef enum SERVER_CMD_T
 bool Server_Init(void);
 void Server_Update(void);
 
-bool Server_StartAudioTx(uint32_t transferSize, uint8_t* txData);
-bool Server_TransmitPacket(uint16_t cmd, uint32_t payloadSize, uint16_t packetNum, uint8_t* txData);
+bool Server_StartAudioTx(SERVER_CMD_T cmd, uint32_t transferSize, uint8_t* txData);
+bool Server_TransmitPacket(SERVER_CMD_T cmd, uint32_t payloadSize, uint16_t packetNum, uint8_t* txData);
 bool Server_TransmitTest(void);
 
 #endif /* __SERVER_H */

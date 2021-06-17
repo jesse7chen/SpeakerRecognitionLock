@@ -37,7 +37,6 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static SPI_HandleTypeDef spi_h;
-static char test_string[] = "Test string\r\n";
 
 GPIO_InitTypeDef test_pin;
 extern ADC_HandleTypeDef adc_h;
@@ -59,8 +58,6 @@ static void SystemClock_Config(void);
   */
 int main(void)
 {
-  static sm_state_t state;
-
   /* STM32L4xx HAL library initialization:
        - Configure the Flash prefetch, Flash preread and Buffer caches
        - Systick timer is configured by default as source of time base, but user
@@ -148,49 +145,17 @@ int main(void)
   HAL_GPIO_Init(NUCLEO_ADCx_GPIO_PORT, &test_pin);
 
 
-/* Start ADC reads */
-  // if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
-  //     Error_Handler();
-  // }
-  //
-  // HAL_Delay(500);
-  //
-  // // Stop DMA reads
-  // if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
-  //   Error_Handler();
-  // }
-  //
-  // // Switch channel rankings
-  // ADC_CalibrateVRefInt();
-  //
-  // /* Start ADC reads */
-  // if (HAL_ADC_Start_DMA(&adc_h, (uint32_t*)audio_data, AUDIO_DATA_BUFFER_SIZE) != HAL_OK){
-  //     Error_Handler();
-  // }
-  //
-  // HAL_Delay(500);
-
   /* Infinite loop */
 
-  state = stateStandby;
+  StateMachine_Init();
   while (1)
   {
     if(Event_GetAndClear(EVENT_AUDIO_TRANSFER_ERROR)){
         Error_Handler();
     }
-    smRun(&state);
+    StateMachine_Run();
     Server_Update();
-	// Blink LED1
-// 	BSP_LED_On(LED1);
-// 	BLE_WriteUART(test_string, sizeof(test_string));
-// 	HAL_Delay(500);
-//
-// //	if (HAL_ADC_Stop_DMA(&adc_h) != HAL_OK){
-// //	  Error_Handler();
-// //	}
-//
-// 	BSP_LED_Off(LED1);
-// 	HAL_Delay(500);
+
   }
 }
 /* End of main function */

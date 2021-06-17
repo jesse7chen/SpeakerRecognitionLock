@@ -4,8 +4,11 @@ set( PROJECT_SOURCES
         src/bluetooth.c
         src/button.c
         src/error.c
+        src/ErrorState.c
         src/ESP8266.c
         src/events.c
+        src/fsm_evt_queue.c
+        src/InitState.c
         src/main.c
         src/microphone.c
         src/server.c
@@ -15,6 +18,7 @@ set( PROJECT_SOURCES
         src/stm32l4xx_it.c
         #src/syscalls.c
         src/system_stm32l4xx.c
+        src/TestState.c
 
 
         HAL_Driver/src/stm32l4xx_hal_rcc.c
@@ -123,8 +127,11 @@ set( PROJECT_SOURCES
         inc/button.h
         inc/common.h
         inc/error.h
+        inc/ErrorState.h
         inc/ESP8266.h
         inc/events.h
+        inc/fsm_evt_queue.h
+        inc/InitState.h
         inc/main.h
         inc/microphone.h
         inc/server.h
@@ -133,6 +140,7 @@ set( PROJECT_SOURCES
         inc/stm32l4xx_hal_conf.h
         inc/stm32l4xx_it.h
         inc/stm32_assert.h
+        inc/TestState.h
 
         HAL_Driver/inc/stm32l4xx_ll_pwr.h
         HAL_Driver/inc/stm32l4xx_hal_opamp.h

@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "button.h"
 #include "events.h"
+#include "fsm_evt_queue.h"
 #include "stm32l4xx.h"
 #include "stm32l4xx_hal_gpio.h"
 #include "stm32l4xx_hal_tim.h"
@@ -117,9 +118,16 @@ static void HandleDebounce(void){
     if(m_consecutiveCounts > REQUIRED_CONSECUTIVE_COUNTS){
         m_consecutiveCounts = 0;
         m_debounceFlag = false;
-        // If button was pressed, set event
+        // If button was pressed, set fsm event
         if (pressed == true){
-            Event_Set(EVENT_USER_BUTTON_PRESS);
+
+            FSM_EVT_T event = {
+                .id = FSM_EVT_USER_BUTTON_PRESS,
+                .size = 0,
+                .data = NULL
+            };
+
+            FSM_EVT_QUEUE_Push(event);
         }
         HAL_TIM_Base_Stop_IT(&m_buttonTmr);
     }
