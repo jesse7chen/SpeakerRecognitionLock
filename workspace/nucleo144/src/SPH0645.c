@@ -98,9 +98,12 @@ bool SPH0645_Init(void){
     return success;
 }
 
+uint16_t SPH0645_GetNumUnitsLeft(void) {
+    return m_MemsDmaHandler.Instance->CNDTR;
+}
 
-HAL_StatusTypeDef SPH0645_StartRecord(uint8_t *buff, uint16_t size) {
-    return HAL_SAI_Receive_DMA(&m_MemsSaiHandler, buff, size);
+HAL_StatusTypeDef SPH0645_StartRecord(uint8_t *buff, uint16_t length) {
+    return HAL_SAI_Receive_DMA(&m_MemsSaiHandler, buff, length);
 }
 
 HAL_StatusTypeDef SPH0645_StopRecord(void) {
@@ -123,7 +126,7 @@ static bool SAI1ClockInit(void) {
     // Set clock config
     // Since we want 16 kHz sampling with 64 bit word select period (even though
     // active frame is only 32 bits), need clock of least 16kHz * 64 bits * 2 = 2.048 MHz
-    
+
     // Due to internal resynchronization stages, PCLK APB frequency must be higher than twice
     // the bit rate clock frequency.
 

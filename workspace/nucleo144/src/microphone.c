@@ -13,6 +13,7 @@
 #include "adc.h"
 #include "error.h"
 #include "events.h"
+#include "fsm_evt_queue.h"
 #include "microphone.h"
 #include "SPH0645.h"
 #include "stm32l4xx.h"
@@ -112,8 +113,18 @@ HAL_StatusTypeDef Mic_StopRecord(void){
     return SPH0645_StopRecord();
 }
 
-AUDIO_SIZE_T* Mic_GetAudioData(uint32_t* size){
-    *size = sizeof(m_AudioBuff);
+AUDIO_SIZE_T* Mic_GetAudioData(uint32_t* size) {
+
+    uint16_t length = 0;
+
+    length = AUDIO_DATA_BUFFER_LEN - SPH0645_GetNumUnitsLeft();
+    *size = length * sizeof(AUDIO_SIZE_T);
+
+    // Sanity check size
+    if(*size > sizeof(m_AudioBuff)) {
+        *size = sizeof(m_AudioBuff);
+    }
+
     return m_AudioBuff;
 }
 
@@ -166,7 +177,12 @@ void Mic_RxCompleteCallback(void){
     }
 
 #else
-    Event_Set(EVENT_AUDIO_RECORD_DONE);
+    FSM_EVT_T event = {
+        .id = FSM_EVT_AUDIO_RECORD_DONE,
+        .size = 0,
+        .data = NULL
+    };
+    FSM_EVT_QUEUE_Push(event);
 #endif
 }
 
@@ -193,7 +209,12 @@ static void Mic_AudioBuffDmaXferComplete(DMA_HandleTypeDef* hdma){
     }
     // Check if this is the final transfer
     if(m_AudioBuffTransferCount >= AUDIO_DATA_BUFFER_EXPECTED_TRANSFERS){
-        Event_Set(EVENT_AUDIO_RECORD_DONE);
+        FSM_EVT_T event = {
+            .id = FSM_EVT_AUDIO_RECORD_DONE,
+            .size = 0,
+            .data = NULL
+        };
+        FSM_EVT_QUEUE_Push(event);
     }
 }
 #endif
