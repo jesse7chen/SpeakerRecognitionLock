@@ -231,7 +231,7 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
 static HAL_StatusTypeDef ChangeADCMode(ADC_MODE_T mode){
   HAL_StatusTypeDef retVal = HAL_OK;
 
-  if(mode < ADC_MODE_MIN || mode >= ADC_MODE_MAX){
+  if(mode >= ADC_MODE_MAX){
       Error_Handler();
   }
 

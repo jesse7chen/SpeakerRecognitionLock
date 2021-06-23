@@ -7,8 +7,10 @@ set( PROJECT_SOURCES
         src/ErrorState.c
         src/ESP8266.c
         src/events.c
+        src/FlashDriver.c
         src/fsm_evt_queue.c
         src/InitState.c
+        src/LockedState.c
         src/main.c
         src/microphone.c
         src/server.c
@@ -19,6 +21,8 @@ set( PROJECT_SOURCES
         #src/syscalls.c
         src/system_stm32l4xx.c
         src/TestState.c
+        src/TrainState.c
+        src/UnlockedState.c
 
 
         HAL_Driver/src/stm32l4xx_hal_rcc.c
@@ -130,8 +134,10 @@ set( PROJECT_SOURCES
         inc/ErrorState.h
         inc/ESP8266.h
         inc/events.h
+        inc/FlashDriver.h
         inc/fsm_evt_queue.h
         inc/InitState.h
+        inc/LockedState.h
         inc/main.h
         inc/microphone.h
         inc/server.h
@@ -141,6 +147,8 @@ set( PROJECT_SOURCES
         inc/stm32l4xx_it.h
         inc/stm32_assert.h
         inc/TestState.h
+        inc/TrainState.h
+        inc/UnlockedState.h
 
         HAL_Driver/inc/stm32l4xx_ll_pwr.h
         HAL_Driver/inc/stm32l4xx_hal_opamp.h

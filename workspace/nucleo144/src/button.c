@@ -17,15 +17,42 @@
 #include "stm32l4xx_hal_tim.h"
 #include "stm32l4xx_nucleo_144.h"
 
+/* Private typedef -----------------------------------------------------------*/
+
+typedef struct BUTTON_INFO_T {
+    GPIO_TypeDef* gpioPort;
+    uint32_t gpioPin;
+    FSM_EVT_ID_T event;
+    uint16_t consecutiveCounts;
+    bool lastPressedValue;
+    bool debounceNeeded;
+} BUTTON_INFO_T;
+
 /* Constants -----------------------------------------------------------------*/
-const static uint8_t REQUIRED_CONSECUTIVE_COUNTS = 8;
+static const uint8_t REQUIRED_CONSECUTIVE_COUNTS = 8;
 
 /* Private variables ---------------------------------------------------------*/
 static TIM_HandleTypeDef m_buttonTmr;
 static TIM_ClockConfigTypeDef m_buttonTmrCfg;
-static bool m_debounceFlag = false;
-static uint16_t m_consecutiveCounts = 0;
-static bool m_lastPressedValue = false;
+
+static BUTTON_INFO_T m_buttons[BUTTON_MAX] = {
+    [BUTTON_USER] = {
+        .gpioPort = USER_BUTTON_GPIO_PORT,
+        .gpioPin = USER_BUTTON_PIN,
+        .event = FSM_EVT_USER_BUTTON_PRESS,
+        .consecutiveCounts = 0,
+        .lastPressedValue = false,
+        .debounceNeeded = false,
+    },
+    [BUTTON_LOCK] = {
+        .gpioPort = LOCK_BUTTON_GPIO_PORT,
+        .gpioPin = LOCK_BUTTON_PIN,
+        .event = FSM_EVT_LOCK_BUTTON_PRESS,
+        .consecutiveCounts = 0,
+        .lastPressedValue = false,
+        .debounceNeeded = false,
+    }
+};
 
 /* Private function prototypes -----------------------------------------------*/
 static void HandleDebounce(void);
@@ -33,8 +60,9 @@ static void HandleDebounce(void);
 bool Button_Init(void){
     bool success = true;
 
-    /* Configure button as external interrupt generator */
+    /* Configure buttons as external interrupt generator */
     BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
+    BSP_PB_Init(BUTTON_LOCK, BUTTON_MODE_EXTI);
 
     // Configure debounce timer
     m_buttonTmr.Instance = TIM2;
@@ -57,12 +85,10 @@ bool Button_Init(void){
     return success;
 }
 
-void Button_DebounceCallback(void){
-    if(m_debounceFlag == false)
-    {
-        m_debounceFlag = true;
-        HAL_TIM_Base_Start_IT(&m_buttonTmr);
-    }
+void Button_DebounceCallback(Button_TypeDef button){
+    m_buttons[button].debounceNeeded = true;
+    // Doesn't seem to be any impact if this is called while timer is already started
+    HAL_TIM_Base_Start_IT(&m_buttonTmr);
 }
 
 TIM_HandleTypeDef* Button_GetDebounceTmrHandle(void){
@@ -102,33 +128,46 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
 }
 
 static void HandleDebounce(void){
-    GPIO_PinState pinState =
-        HAL_GPIO_ReadPin(USER_BUTTON_GPIO_PORT, USER_BUTTON_PIN);
+    bool allButtonsDebounced = true;
 
-    bool pressed = (pinState == GPIO_PIN_RESET) ? true : false;
+    for(uint8_t i = 0; i < BUTTON_MAX; i++) {
+        if(m_buttons[i].debounceNeeded == true) {
+            GPIO_PinState pinState =
+                HAL_GPIO_ReadPin(m_buttons[i].gpioPort, m_buttons[i].gpioPin);
 
-    if (pressed == m_lastPressedValue){
-        m_consecutiveCounts++;
-    }
-    else{
-        m_consecutiveCounts = 0;
-        m_lastPressedValue = pressed;
-    }
+            bool pressed = (pinState == GPIO_PIN_RESET) ? true : false;
 
-    if(m_consecutiveCounts > REQUIRED_CONSECUTIVE_COUNTS){
-        m_consecutiveCounts = 0;
-        m_debounceFlag = false;
-        // If button was pressed, set fsm event
-        if (pressed == true){
+            if (pressed == m_buttons[i].lastPressedValue){
+                m_buttons[i].consecutiveCounts++;
+            }
+            else{
+                m_buttons[i].consecutiveCounts = 0;
+                m_buttons[i].lastPressedValue = pressed;
+            }
 
-            FSM_EVT_T event = {
-                .id = FSM_EVT_USER_BUTTON_PRESS,
-                .size = 0,
-                .data = NULL
-            };
+            if(m_buttons[i].consecutiveCounts > REQUIRED_CONSECUTIVE_COUNTS){
+                m_buttons[i].consecutiveCounts = 0;
+                m_buttons[i].debounceNeeded = false;
+                // If button was pressed, set fsm event
+                if (pressed == true) {
 
-            FSM_EVT_QUEUE_Push(event);
+                    FSM_EVT_T event = {
+                        .id = m_buttons[i].event,
+                        .size = 0,
+                        .data = NULL
+                    };
+
+                    FSM_EVT_QUEUE_Push(event);
+                }
+            }
+            else {
+                allButtonsDebounced = false;
+            }
         }
+    }
+
+    if(allButtonsDebounced == true) {
+        // Todo: Does timer need to be reset?
         HAL_TIM_Base_Stop_IT(&m_buttonTmr);
     }
 }

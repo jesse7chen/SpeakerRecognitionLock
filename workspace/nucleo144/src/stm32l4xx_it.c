@@ -108,7 +108,9 @@ void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hsai)
   */
 void EXTI15_10_IRQHandler(void)
 {
+  // Call all functions related to lines 15-10
   HAL_GPIO_EXTI_IRQHandler(USER_BUTTON_PIN);
+  HAL_GPIO_EXTI_IRQHandler(LOCK_BUTTON_PIN);
 }
 
 /**
@@ -120,7 +122,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == USER_BUTTON_PIN)
   {
-    Button_DebounceCallback();
+      Button_DebounceCallback(BUTTON_USER);
+  }
+  else if (GPIO_Pin == LOCK_BUTTON_PIN) {
+      Button_DebounceCallback(BUTTON_LOCK);
   }
 }
 
@@ -142,6 +147,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi){
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi){
     if(hspi->Instance == ESP8266_SPI3){
+        ESP8266_SpiRxCpltCallback(hspi);
     }
 }
 

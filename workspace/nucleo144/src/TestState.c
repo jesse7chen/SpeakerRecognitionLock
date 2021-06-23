@@ -19,8 +19,8 @@
 #include "TestState.h"
 
 /* Private functions ---------------------------------------------------------*/
-static bool RecordState(Fsm* me, FSM_EVT_T const *event);
-static bool ProcessingState(Fsm* me, FSM_EVT_T const *event);
+static bool TestState_Record(Fsm* me, FSM_EVT_T const *event);
+static bool TestState_Processing(Fsm* me, FSM_EVT_T const *event);
 
 bool TestState_Standby(Fsm* me, FSM_EVT_T const *event) {
     State newState = &TestState_Standby;
@@ -30,7 +30,7 @@ bool TestState_Standby(Fsm* me, FSM_EVT_T const *event) {
     {
         case FSM_EVT_USER_BUTTON_PRESS:
             if (Mic_StartRecord() == HAL_OK) {
-                newState = &RecordState;
+                newState = &TestState_Record;
             }
             else {
                 newState = &ErrorState;
@@ -46,8 +46,8 @@ bool TestState_Standby(Fsm* me, FSM_EVT_T const *event) {
     return eventHandled;
 }
 
-static bool RecordState(Fsm* me, FSM_EVT_T const *event) {
-    State newState = &RecordState;
+static bool TestState_Record(Fsm* me, FSM_EVT_T const *event) {
+    State newState = &TestState_Record;
     bool eventHandled = true;
 
     uint32_t size = 0;
@@ -61,7 +61,7 @@ static bool RecordState(Fsm* me, FSM_EVT_T const *event) {
             if (Mic_StopRecord() == HAL_OK) {
                 audioData = Mic_GetAudioData(&size);
                 if(Server_StartAudioTx(SERVER_TEST_CMD, size, (uint8_t*)audioData) == true) {
-                    newState = &ProcessingState;
+                    newState = &TestState_Processing;
                 }
                 else {
                     newState = &ErrorState;
@@ -81,14 +81,15 @@ static bool RecordState(Fsm* me, FSM_EVT_T const *event) {
     return eventHandled;
 }
 
-static bool ProcessingState(Fsm* me, FSM_EVT_T const *event) {
-    State newState = &ProcessingState;
+static bool TestState_Processing(Fsm* me, FSM_EVT_T const *event) {
+    State newState = &TestState_Processing;
     bool eventHandled = true;
 
     switch(event->id)
     {
         case FSM_EVT_AUDIO_TRANSFER_DONE:
             newState = &TestState_Standby;
+            break;
 
         default:
             eventHandled = false;

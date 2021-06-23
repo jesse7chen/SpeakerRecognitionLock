@@ -106,14 +106,15 @@
 /** @defgroup STM32L4XX_NUCLEO_144_Private_Variables Private Variables
   * @{
   */
-GPIO_TypeDef *GPIO_PORT[LEDn] = {LED1_GPIO_PORT, LED2_GPIO_PORT, LED3_GPIO_PORT};
+GPIO_TypeDef *GPIO_PORT[LEDn] = {LED1_GPIO_PORT, LED2_GPIO_PORT, LED3_GPIO_PORT,
+                                 UNLOCK_LED_GPIO_PORT, LOCKED_LED_GPIO_PORT};
 
-const uint16_t GPIO_PIN[LEDn] = {LED1_PIN, LED2_PIN, LED3_PIN};
+const uint16_t GPIO_PIN[LEDn] = {LED1_PIN, LED2_PIN, LED3_PIN, UNLOCK_LED_PIN, LOCKED_LED_PIN};
 
-GPIO_TypeDef *BUTTON_PORT[BUTTONn] = {USER_BUTTON_GPIO_PORT};
-const uint16_t BUTTON_PIN[BUTTONn] = {USER_BUTTON_PIN};
-const uint8_t BUTTON_IRQn[BUTTONn] = {USER_BUTTON_EXTI_IRQn};
-
+GPIO_TypeDef *BUTTON_PORT[BUTTONn] = {USER_BUTTON_GPIO_PORT, LOCK_BUTTON_GPIO_PORT};
+const uint16_t BUTTON_PIN[BUTTONn] = {USER_BUTTON_PIN, LOCK_BUTTON_PIN};
+const uint8_t BUTTON_IRQn[BUTTONn] = {USER_BUTTON_EXTI_IRQn, LOCK_BUTTON_EXTI_IRQn};
+const uint8_t BUTTON_Priority[BUTTONn] = {USER_BUTTON_PRIORITY, LOCK_BUTTON_PRIORITY};
 /**
  * @brief BUS variables
  */
@@ -193,6 +194,8 @@ void BSP_LED_Init(Led_TypeDef Led)
 
   /* Enable the GPIO_LED Clock */
   LEDx_GPIO_CLK_ENABLE(Led);
+  UNLOCK_LED_GPIO_CLK_ENABLE();
+  LOCKED_LED_GPIO_CLK_ENABLE();
 
   /* Configure the GPIO_LED pin */
   GPIO_InitStruct.Pin = GPIO_PIN[Led];
@@ -292,6 +295,8 @@ void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
 
   /* Enable the BUTTON Clock */
   BUTTONx_GPIO_CLK_ENABLE(Button);
+  // Manually enable clock for LOCK button
+  LOCK_BUTTON_GPIO_CLK_ENABLE();
 
   if (ButtonMode == BUTTON_MODE_GPIO)
   {
@@ -311,7 +316,7 @@ void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
     HAL_GPIO_Init(BUTTON_PORT[Button], &GPIO_InitStruct);
 
     /* Enable and set Button EXTI Interrupt to the lowest priority */
-    HAL_NVIC_SetPriority((IRQn_Type)(BUTTON_IRQn[Button]), 0x0F, 0x00);
+    HAL_NVIC_SetPriority((IRQn_Type)(BUTTON_IRQn[Button]), BUTTON_Priority[Button], 0x00);
     HAL_NVIC_EnableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
   }
 }

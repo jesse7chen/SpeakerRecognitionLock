@@ -8,6 +8,7 @@
  */
 
 #include "error.h"
+#include "server.h"
 #include "stm32l4xx_nucleo_144.h"
 
 void Error_Handler(void){
@@ -16,4 +17,8 @@ void Error_Handler(void){
   while (1)
   {
   }
+}
+
+bool Error_SendErrorMsg(char* msg, uint32_t msgSize) {
+    return Server_SendErrorMsg(msgSize, (uint8_t*)msg);
 }

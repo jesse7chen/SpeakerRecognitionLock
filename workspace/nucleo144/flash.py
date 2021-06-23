@@ -2,6 +2,7 @@ import os.path as path
 import os
 import subprocess
 import filecmp
+import time
 
 # This may need to be changed depending on actual location of STM32CubeProgrammer
 stm32cubeprogrammer_path = "/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin/STM32_Programmer_CLI"
@@ -20,6 +21,8 @@ erase_cmd = [stm32cubeprogrammer_path,
 
 subprocess.check_call(erase_cmd, cwd=base_path)
 
+time.sleep(0.5)
+
 # Download flash
 download_cmd = [stm32cubeprogrammer_path,
                "--connect",
@@ -29,6 +32,8 @@ download_cmd = [stm32cubeprogrammer_path,
                "0x08000000"]
 
 subprocess.check_call(download_cmd, cwd=base_path)
+
+time.sleep(0.5)
 
 # Read and verify flash was downloaded correctly
 
@@ -48,6 +53,8 @@ subprocess.check_call(read_cmd, cwd=base_path)
 
 if (filecmp.cmp(output_file, bin_path, shallow=False) == False):
     raise OSError("Verification of binary failed!")
+
+time.sleep(0.5)
 
 # Start program
 start_cmd = [stm32cubeprogrammer_path,

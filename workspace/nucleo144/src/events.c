@@ -24,7 +24,7 @@ void Event_Init(void){
 
 void Event_Set(EVENT_T event){
     // Range check event
-    if(event >= EVENT_MIN && event < EVENT_MAX)
+    if(event < EVENT_MAX)
     {
         __disable_irq();
         m_eventTable[event]++;
@@ -33,7 +33,7 @@ void Event_Set(EVENT_T event){
 }
 
 void Event_Clear(EVENT_T event){
-    if(event >= EVENT_MIN && event < EVENT_MAX)
+    if(event < EVENT_MAX)
     {
         __disable_irq();
         m_eventTable[event] = 0;
@@ -43,7 +43,7 @@ void Event_Clear(EVENT_T event){
 
 uint8_t Event_Get(EVENT_T event){
     uint8_t numEvents = 0;
-    if(event >= EVENT_MIN && event < EVENT_MAX)
+    if(event < EVENT_MAX)
     {
         __disable_irq();
         numEvents = m_eventTable[event];
@@ -60,7 +60,7 @@ uint8_t Event_Get(EVENT_T event){
 
 uint8_t Event_GetAndDecrement(EVENT_T event){
     uint8_t numEvents = 0;
-    if(event >= EVENT_MIN && event < EVENT_MAX)
+    if(event < EVENT_MAX)
     {
         __disable_irq();
         if(m_eventTable[event] > 0){
@@ -79,7 +79,7 @@ uint8_t Event_GetAndDecrement(EVENT_T event){
 
 uint8_t Event_GetAndClear(EVENT_T event){
     uint8_t numEvents = 0;
-    if(event >= EVENT_MIN && event < EVENT_MAX)
+    if(event < EVENT_MAX)
     {
         __disable_irq();
         numEvents = m_eventTable[event];

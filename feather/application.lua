@@ -29,24 +29,6 @@ local INT_PIN = 1
 -- Flags
 isTransferInProgress = false
 
--- MQTT Functionality
-success_callback = function(client)
-    print(string.format("Connected to broker: %s", HostMachineIP))
-    client:publish("zz-sensor-readings", "test1234", 0, 0, function(client) print("sent") end)
-end
-
-fail_callback = function(client, reason)
-    print("failed reason", reason)
-end
-
-function MQTT_Connect()
-    m:connect(HostMachineIP, 1883, 0, success_callback, fail_callback)
-end
-
-function MQTT_Disconnect()
-    m:close()
-end
-
 -- Utility functions
 function StringToUint16(s)
 
@@ -54,6 +36,15 @@ function StringToUint16(s)
     upperByte = string.byte(s:sub(2,2))
 
     return (bit.lshift(upperByte, 8) + lowerByte)
+end
+
+local function starts_with(str, start)
+   return str:sub(1, #start) == start
+end
+
+local function get_response(msg)
+    response = msg:sub(#"response ", -1)
+    return tonumber(response)
 end
 
 -- SPI functionality
@@ -77,8 +68,8 @@ function SPI_FetchData()
             -- established before sending more packets, otherwise if packet 2 is
             -- received first for some reason, then we will fail
             if packetNum == 1 then
-                ws:on("connection", function()
-                    ws:send(header..data,2)
+                ws:on("connection", function(client)
+                    client:send(header..data,2)
                 end)
                 ws:connect(HostMachineWSPort)
             else
@@ -102,13 +93,14 @@ end
 
 -- Websocket functionality
 function Websocket_CloseCallback(_, status)
-    -- print("Transfer finished")
     isTransferInProgress = false
 end
 
 function Websocket_ReceiveCallback(_, msg, opcode)
     if(msg == "success") then
         isTransferInProgress = false
+    elseif(starts_with(msg, "response ") == true) then
+        spi.send(1, get_response(msg))
     end
 end
 
