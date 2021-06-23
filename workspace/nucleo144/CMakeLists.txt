@@ -46,6 +46,9 @@ target_compile_options(${EXECUTABLE} PRIVATE
         -ffunction-sections # Place each function into its own section.
 
         -Wall # Enable most warning messages.
+        -Wextra # Enable extra warning messages
+        -Wno-unused-parameter # Do not enable unused parameters warning
+        -g3 # More debugging info
 
         $<$<CONFIG:Debug>:-Og>
 )

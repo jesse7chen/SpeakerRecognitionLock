@@ -35,7 +35,14 @@ static Fsm m_StateMachine;
 
 HAL_StatusTypeDef StateMachine_Init(void){
   FsmCtor_(&m_StateMachine, &InitState);
-  FsmInit(&m_StateMachine, 0);
+
+  FSM_EVT_T event = {
+      .id = FSM_EVT_INIT,
+      .size = 0,
+      .data = NULL
+  };
+  FSM_EVT_QUEUE_Push(event);
+
   return HAL_OK;
 }
 
@@ -47,7 +54,10 @@ void StateMachine_Run(void) {
 
         if(FSM_EVT_QUEUE_Pop(&event) == true) {
             // Check if event is not handled - my attempt at implementing
-            // "Programming by difference"
+            // "Programming by difference" philosophy
+
+            // Store old state
+            Fsm oldState = m_StateMachine;
             if(FsmDispatch(&m_StateMachine, &event) == false) {
                 switch(event.id) {
                     case FSM_EVT_ERROR:
@@ -56,6 +66,12 @@ void StateMachine_Run(void) {
                     default:
                         break;
                 }
+            }
+
+            // If state has changed, initialize new state - this acts as a sort of
+            // "Entry" function, though it could be done a bit better
+            if(oldState.state__ != m_StateMachine.state__) {
+                FsmInit(&m_StateMachine, 0);
             }
         }
     }

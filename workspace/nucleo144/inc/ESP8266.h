@@ -13,8 +13,10 @@ typedef uint8_t ESP8266_SPI_DATA_SIZE_T;
 
 bool ESP8266_Init(void);
 bool ESP8266_TransmitData(uint8_t* txData, uint16_t size);
+bool ESP8266_ReceiveData(uint8_t* rxData, uint16_t length);
 SPI_HandleTypeDef* ESP8266_GetSpiHandle(void);
 void ESP8266_SpiTxCpltCallback(SPI_HandleTypeDef *hspi);
+void ESP8266_SpiRxCpltCallback(SPI_HandleTypeDef *hspi);
 
 
 #endif /* __ESP8266_H */

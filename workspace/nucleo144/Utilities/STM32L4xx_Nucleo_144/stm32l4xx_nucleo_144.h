@@ -66,7 +66,12 @@ typedef enum
   LED2 = 1,
   LED_BLUE = LED2,
   LED3 = 2,
-  LED_RED = LED3
+  LED_RED = LED3,
+  LED4 = 3,
+  LED_UNLOCK = LED4,
+  LED5 = 4,
+  LED_LOCKED = LED5,
+  LED_MAX
 }
 Led_TypeDef;
 
@@ -74,7 +79,9 @@ typedef enum
 {
   BUTTON_USER = 0,
   /* Alias */
-  BUTTON_KEY = BUTTON_USER
+  BUTTON_KEY = BUTTON_USER,
+  BUTTON_LOCK,
+  BUTTON_MAX,
 } Button_TypeDef;
 
 typedef enum
@@ -111,7 +118,7 @@ typedef enum
 /** @defgroup STM32L4XX_NUCLEO_144_LED LED
   * @{
   */
-#define LEDn                                    3
+#define LEDn                                    LED_MAX
 
 #define LED1_PIN                                GPIO_PIN_7
 #define LED1_GPIO_PORT                          GPIOC
@@ -137,10 +144,21 @@ typedef enum
   * @}
   */
 
+// External LEDs
+#define UNLOCK_LED_PIN                         GPIO_PIN_10
+#define UNLOCK_LED_GPIO_PORT                   GPIOB
+#define UNLOCK_LED_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOB_CLK_ENABLE()
+#define UNLOCK_LED_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOB_CLK_DISABLE()
+
+#define LOCKED_LED_PIN                         GPIO_PIN_14
+#define LOCKED_LED_GPIO_PORT                   GPIOE
+#define LOCKED_LED_GPIO_CLK_ENABLE()             __HAL_RCC_GPIOE_CLK_ENABLE()
+#define LOCKED_LED_GPIO_CLK_DISABLE()            __HAL_RCC_GPIOE_CLK_DISABLE()
+
 /** @defgroup STM32L4XX_NUCLEO_144_BUTTON BUTTON
   * @{
   */
-#define BUTTONn                                 1
+#define BUTTONn                               BUTTON_MAX
 
 /**
  * @brief Key push-button
@@ -166,6 +184,13 @@ typedef enum
 /**
   * @}
   */
+
+// External buttons
+#define LOCK_BUTTON_PIN                       GPIO_PIN_15
+#define LOCK_BUTTON_GPIO_PORT                 GPIOE
+#define LOCK_BUTTON_GPIO_CLK_ENABLE()         __HAL_RCC_GPIOE_CLK_ENABLE()
+#define LOCK_BUTTON_GPIO_CLK_DISABLE()        __HAL_RCC_GPIOE_CLK_DISABLE()
+#define LOCK_BUTTON_EXTI_IRQn                 EXTI15_10_IRQn
 
 
 /** @defgroup STM32L4XX_NUCLEO_144_PIN PIN
@@ -452,6 +477,9 @@ uint32_t         BSP_SMPS_Supply_Disable(void);
 #define ESP8266_SPI3_PRIORITY           6U
 #define BUTTON_DEBOUNCE_PRIORITY        7U
 //#define TICK_INT_PRIORITY             0x0FU
+// User and lock button both use EXTI15_10_IRQn and therefore have same priority
+#define USER_BUTTON_PRIORITY            12U
+#define LOCK_BUTTON_PRIORITY            12U
 
 // Interrupt subpriorities
 #define SPH0645_SAI_SUBPRIORITY         0U

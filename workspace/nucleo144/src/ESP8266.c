@@ -72,6 +72,14 @@ bool ESP8266_TransmitData(uint8_t* txData, uint16_t length){
     return (HAL_SPI_Transmit_IT(&m_ESP8266SpiHandler, (uint8_t*)txData, length) == HAL_OK);
 }
 
+bool ESP8266_ReceiveData(uint8_t* rxData, uint16_t length){
+    return (HAL_SPI_Receive_IT(&m_ESP8266SpiHandler, (uint8_t*)rxData, length) == HAL_OK);
+}
+
+void ESP8266_SpiRxCpltCallback(SPI_HandleTypeDef *hspi){
+    Event_Set(EVENT_SERVER_DATA_RX);
+}
+
 void ESP8266_SpiTxCpltCallback(SPI_HandleTypeDef *hspi){
     // Disable interrupt line
     BSP_LED_Off(LED1);

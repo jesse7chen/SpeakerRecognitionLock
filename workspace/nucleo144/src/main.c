@@ -81,7 +81,11 @@ int main(void)
   BSP_LED_Init(LED1);
   BSP_LED_Init(LED2);
   BSP_LED_Init(LED3);
+  BSP_LED_Init(LED_UNLOCK);
+  BSP_LED_Init(LED_LOCKED);
 
+  // Clear PEMPTY flash bit since for some reason it's not cleared upon reset?
+  HAL_FLASH_OB_Launch();
 
   if (Mic_Init() != true){
     Error_Handler();
@@ -146,8 +150,8 @@ int main(void)
 
 
   /* Infinite loop */
-
   StateMachine_Init();
+
   while (1)
   {
     if(Event_GetAndClear(EVENT_AUDIO_TRANSFER_ERROR)){
@@ -155,7 +159,6 @@ int main(void)
     }
     StateMachine_Run();
     Server_Update();
-
   }
 }
 /* End of main function */
